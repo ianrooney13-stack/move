@@ -19,7 +19,7 @@
     --surface: #FBFBF8;
     --ink: #16221C;
     --ink-soft: #55665C;
-    --ink-faint: #8B978C;
+    --ink-faint: #798A7E;
     --primary: #2F6E5B;
     --primary-dark: #234F41;
     --on-primary: #F6F7F1;
@@ -37,10 +37,14 @@
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
   }
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px;}
+  @media (prefers-reduced-motion: reduce){
+    *{transition-duration:0.001ms !important; animation-duration:0.001ms !important;}
+  }
   .app{
     max-width:520px;
     margin:0 auto;
-    padding:0 0 96px 0;
+    padding:0 0 calc(88px + env(safe-area-inset-bottom)) 0;
     min-height:100vh;
   }
   header.top{
@@ -48,12 +52,20 @@
     display:flex;
     align-items:baseline;
     justify-content:space-between;
+    border-bottom:1px solid var(--line);
+    margin-bottom:4px;
   }
   header.top .wordmark{
     font-family:'Fraunces',serif;
     font-size:22px;
     font-weight:600;
     letter-spacing:-0.01em;
+    display:flex;
+    align-items:center;
+  }
+  header.top .brand-dot{
+    display:inline-block;width:8px;height:8px;border-radius:50%;
+    background:var(--accent-warm);margin-right:9px;
   }
   header.top .date{
     font-family:'IBM Plex Mono',monospace;
@@ -63,6 +75,13 @@
   main{padding:0 18px;}
   section{display:none;}
   section.active{display:block;}
+  #tab-today.active{
+    min-height:calc(100vh - 180px);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding-bottom:60px;
+  }
 
   /* ---- Today card ---- */
   .today-wrap{
@@ -150,6 +169,13 @@
     display:flex;align-items:center;gap:10px;
     font-family:'Fraunces',serif;font-size:20px;color:var(--primary-dark);
   }
+  .done-state.is-skipped{color:var(--ink-soft);}
+  .check-badge{
+    flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+    width:24px;height:24px;border-radius:50%;font-family:'Inter',sans-serif;
+    font-size:13px;font-weight:700;background:var(--primary);color:var(--on-primary);
+  }
+  .check-badge.is-skip{background:var(--line);color:var(--ink-soft);}
   .skip-row{margin-top:14px;text-align:right;}
 
   /* ---- Nav ---- */
@@ -159,38 +185,71 @@
     border-top:1px solid var(--line);
     display:flex;
     max-width:520px;margin:0 auto;
+    padding-bottom:env(safe-area-inset-bottom);
   }
   nav.tabbar button{
     flex:1;background:none;border-radius:0;
-    padding:14px 4px 12px 4px;
+    padding:10px 4px 10px 4px;
     color:var(--ink-faint);
     font-size:11px;font-weight:600;letter-spacing:0.02em;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+  }
+  nav.tabbar button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+  nav.tabbar button .icon-wrap{
+    width:36px;height:26px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .15s ease;
   }
   nav.tabbar button.active{color:var(--primary);}
+  nav.tabbar button.active .icon-wrap{background:rgba(47,110,91,0.12);}
 
   /* ---- Generic ---- */
   h2.section-title{
     font-family:'Fraunces',serif;font-weight:500;font-size:22px;
     margin:22px 0 4px 0;
   }
+  h3.subsection-title{
+    font-family:'Fraunces',serif;font-weight:500;font-size:16px;
+    color:var(--ink-soft);
+    margin:26px 0 2px 0;
+  }
   p.section-sub{color:var(--ink-soft);font-size:14px;margin:0 0 18px 0;}
   .card{
     background:var(--surface);border:1px solid var(--line);
     border-radius:14px;padding:16px 18px;margin-bottom:12px;
   }
-  .day-row{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:10px 0;border-bottom:1px solid var(--line);
+  .cal-grid{
+    display:grid;
+    grid-template-columns: 40px repeat(7, 1fr);
+    gap:6px;
   }
-  .day-row:last-child{border-bottom:none;}
-  .day-label{font-weight:600;font-size:14px;width:44px;}
-  .slot-toggles{display:flex;gap:8px;}
-  .toggle{
-    font-size:12px;font-weight:600;padding:8px 12px;border-radius:10px;
-    border:1px solid var(--line);background:var(--bg);color:var(--ink-faint);
+  .cal-corner{}
+  .cal-daylabel{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;font-weight:500;color:var(--ink-faint);
+    text-align:center;padding-bottom:4px;
+  }
+  .cal-rowlabel{
+    font-size:11px;font-weight:600;color:var(--ink-soft);
+    display:flex;align-items:center;justify-content:flex-end;
+    padding-right:4px;
+  }
+  .cal-cell{
+    aspect-ratio:1;border-radius:8px;
+    background:var(--bg);border:1px solid var(--line);
     cursor:pointer;
+    transition:background .12s ease, border-color .12s ease;
   }
-  .toggle.on{background:var(--primary);color:var(--on-primary);border-color:var(--primary);}
+  .cal-cell.on{background:var(--primary);border-color:var(--primary);}
+  .cal-cell:active{transform:scale(0.94);}
+  .cal-legend{
+    display:flex;align-items:center;gap:16px;margin-top:14px;
+    font-size:12px;color:var(--ink-faint);
+  }
+  .cal-legend .swatch{
+    width:12px;height:12px;border-radius:4px;display:inline-block;
+    margin-right:6px;vertical-align:-1px;
+  }
   .save-bar{margin-top:16px;}
 
   select, input[type=text], input[type=time]{
@@ -201,10 +260,22 @@
   .field{margin-bottom:14px;}
   .field label{font-size:12px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:6px;}
 
-  .timetable-class{
-    display:flex;gap:8px;align-items:center;margin-bottom:8px;
+  .toggle{
+    font-size:11px;font-weight:600;padding:8px 10px;border-radius:8px;
+    border:1px solid var(--line);background:var(--bg);color:var(--ink-faint);
+    cursor:pointer;white-space:nowrap;
   }
-  .timetable-class input{flex:1;}
+  .toggle.on{background:var(--primary);color:var(--on-primary);border-color:var(--primary);}
+  .timetable-class{
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--line);
+  }
+  .timetable-class:last-of-type{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .timetable-class input[type=time]{flex:0 0 92px;}
+  .timetable-class input[type=text]{flex:1 1 130px;min-width:120px;}
+  .timetable-class select{flex:1 1 110px;}
+  .timetable-class .toggle{flex:0 0 auto;}
+  .timetable-class .remove-x{flex:0 0 auto;margin-left:auto;}
   .remove-x{color:var(--ink-faint);font-size:18px;cursor:pointer;padding:4px 8px;}
 
   .ledger-item, .report-line{
@@ -212,17 +283,36 @@
     padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;
   }
   .ledger-item:last-child, .report-line:last-child{border-bottom:none;}
+  .line-label{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-faint);margin-right:8px;
+  }
   .tag{
     font-family:'IBM Plex Mono',monospace;font-size:11px;
     padding:3px 8px;border-radius:6px;background:var(--bg);color:var(--ink-soft);
   }
-  .tag.skipped{background:#EFE4DC;color:var(--accent-warm);}
-  .tag.gym{background:#EFE4DC;color:var(--accent-warm);}
+  .tag.skipped{background:#E7E9E2;color:var(--ink-faint);}
+  .tag.gym{background:#F4E3D7;color:#B15E39;}
   .tag.outside{background:#E4EAE1;color:var(--primary-dark);}
 
   .empty{
     text-align:center;color:var(--ink-faint);font-size:14px;padding:30px 0;
   }
+  .disclosure{
+    border:none;padding:0;margin:28px 0 0 0;
+  }
+  .disclosure summary{
+    list-style:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:space-between;
+    font-family:'Fraunces',serif;font-weight:500;font-size:20px;
+    padding:4px 0;
+  }
+  .disclosure summary::-webkit-details-marker{display:none;}
+  .disclosure summary .chev{
+    font-family:'Inter',sans-serif;font-size:16px;color:var(--ink-faint);
+    transition:transform .2s ease;
+  }
+  .disclosure[open] summary .chev{transform:rotate(90deg);}
+  .disclosure .disclosure-body{padding-top:6px;}
 
   .modal-overlay{
     position:fixed;inset:0;background:rgba(20,30,24,0.35);
@@ -246,7 +336,7 @@
 <div class="app">
 
   <header class="top">
-    <div class="wordmark">Move</div>
+    <div class="wordmark"><span class="brand-dot"></span>Move</div>
     <div class="date" id="headerDate"></div>
   </header>
 
@@ -267,18 +357,40 @@
     <section id="tab-week">
       <h2 class="section-title">This week</h2>
       <p class="section-sub">Mark when you're off with Jack — mornings and evenings. Move only suggests something on off slots.</p>
-      <div class="card" id="weekGrid"></div>
+      <div class="card">
+        <div class="cal-grid" id="weekGrid"></div>
+        <div class="cal-legend">
+          <span><span class="swatch" style="background:var(--primary);"></span>Off (Move slot)</span>
+          <span><span class="swatch" style="background:var(--bg);border:1px solid var(--line);"></span>On with Jack</span>
+        </div>
+      </div>
       <div class="save-bar">
         <button class="btn-primary" style="width:100%" onclick="saveWeekSchedule()">Save week</button>
       </div>
 
-      <h2 class="section-title">Gym timetable</h2>
-      <p class="section-sub">Classes you could go to. Move only suggests a class when one is actually on.</p>
-      <div class="card" id="timetableList"></div>
-      <button class="btn-ghost" style="width:100%;margin-top:8px;" onclick="addTimetableRow()">+ Add class</button>
-      <div class="save-bar">
-        <button class="btn-primary" style="width:100%" onclick="saveTimetable()">Save timetable</button>
+      <div id="weekPlanSection">
+        <h3 class="subsection-title">This week's plan</h3>
+        <p class="section-sub">Set once you save the week above. Each slot is fixed for the week — day-to-day you can still nudge it with more/less or skip.</p>
+        <div class="card" id="weekPlanPreview"></div>
       </div>
+
+      <div id="bookingSection">
+        <h3 class="subsection-title">Classes to book</h3>
+        <p class="section-sub">Anything in this week's plan that's a real class. Tick it off once you've booked it — Move doesn't book for you.</p>
+        <div class="card" id="bookingList"></div>
+      </div>
+
+      <details class="disclosure">
+        <summary>Gym timetable <span class="chev">&rsaquo;</span></summary>
+        <div class="disclosure-body">
+          <p class="section-sub">Classes you could go to. Move only suggests a class when one is actually on.</p>
+          <div class="card" id="timetableList"></div>
+          <button class="btn-ghost" style="width:100%;margin-top:8px;" onclick="addTimetableRow()">+ Add class</button>
+          <div class="save-bar">
+            <button class="btn-primary" style="width:100%" onclick="saveTimetable()">Save timetable</button>
+          </div>
+        </div>
+      </details>
     </section>
 
     <!-- REPORT -->
@@ -291,9 +403,18 @@
   </main>
 
   <nav class="tabbar">
-    <button id="navToday" class="active" onclick="switchTab('today')">TODAY</button>
-    <button id="navWeek" onclick="switchTab('week')">WEEK</button>
-    <button id="navReport" onclick="switchTab('report')">REPORT</button>
+    <button id="navToday" class="active" onclick="switchTab('today')">
+      <span class="icon-wrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+      TODAY
+    </button>
+    <button id="navWeek" onclick="switchTab('week')">
+      <span class="icon-wrap"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="3"/><path d="M3.5 9.5h17M8 3v3M16 3v3"/></svg></span>
+      WEEK
+    </button>
+    <button id="navReport" onclick="switchTab('report')">
+      <span class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M5 19V10M12 19V5M19 19v-7"/></svg></span>
+      REPORT
+    </button>
   </nav>
 
   <!-- Ledger modal -->
@@ -301,6 +422,10 @@
     <div class="modal">
       <h3>What did you do?</h3>
       <div class="type-grid" id="ledgerTypeGrid"></div>
+      <div class="field hidden" id="focusField">
+        <label>What did it focus on? (optional)</label>
+        <div class="type-grid" id="focusGrid"></div>
+      </div>
       <div class="field">
         <label>Notes (optional)</label>
         <input type="text" id="ledgerNotes" placeholder="e.g. 45 min, felt strong">
@@ -367,6 +492,8 @@ const LEDGER_TYPES = ['Strength (Strong)','Pilates class','Golf','Squash','Footb
    ============================================================ */
 let state = {
   weekSchedule: {},   // { "mon": {morning:true, evening:false}, ... } for the CURRENT week doc
+  weekPlan: {},        // { "mon": {morning:{rung,gymName,gymType}, evening:{...}}, ... } committed at Sunday save
+  weekBookings: {},     // { "mon": {morning:true}, ... } — whether a planned class has been booked
   timetable: {},       // { mon: [{time:"06:30", name:"HIIT"}], ... }
   dailyLog: {},         // { "2026-08-09": { morning:{...}, evening:{...} } }
   ledger: {}            // { "2026-08-09": { entryId: {type, notes, loggedAt} } }
@@ -410,6 +537,18 @@ function initApp(){
     renderToday();
   });
 
+  db.ref('move/weekPlan/'+todayWeekStart).on('value', snap=>{
+    state.weekPlan = snap.val() || {};
+    renderToday();
+    renderWeekPlanPreview();
+    renderBookingList();
+  });
+
+  db.ref('move/weekBookings/'+todayWeekStart).on('value', snap=>{
+    state.weekBookings = snap.val() || {};
+    renderBookingList();
+  });
+
   db.ref('move/timetable').on('value', snap=>{
     state.timetable = snap.val() || {};
     renderTimetable();
@@ -446,17 +585,31 @@ function switchTab(name){
 function renderWeekGrid(){
   const grid = document.getElementById('weekGrid');
   grid.innerHTML = '';
+
+  // corner + day labels
+  grid.insertAdjacentHTML('beforeend', '<div class="cal-corner"></div>');
+  DAYS.forEach(day=>{
+    grid.insertAdjacentHTML('beforeend', `<div class="cal-daylabel">${DAY_LABELS[day]}</div>`);
+  });
+
+  // AM row
+  grid.insertAdjacentHTML('beforeend', '<div class="cal-rowlabel">AM</div>');
   DAYS.forEach(day=>{
     const val = state.weekSchedule[day] || {morning:false, evening:false};
-    const row = document.createElement('div');
-    row.className = 'day-row';
-    row.innerHTML = `
-      <div class="day-label">${DAY_LABELS[day]}</div>
-      <div class="slot-toggles">
-        <div class="toggle ${val.morning?'on':''}" onclick="toggleSlot('${day}','morning')">AM off</div>
-        <div class="toggle ${val.evening?'on':''}" onclick="toggleSlot('${day}','evening')">PM off</div>
-      </div>`;
-    grid.appendChild(row);
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (val.morning ? ' on' : '');
+    cell.onclick = ()=>toggleSlot(day,'morning');
+    grid.appendChild(cell);
+  });
+
+  // PM row
+  grid.insertAdjacentHTML('beforeend', '<div class="cal-rowlabel">PM</div>');
+  DAYS.forEach(day=>{
+    const val = state.weekSchedule[day] || {morning:false, evening:false};
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (val.evening ? ' on' : '');
+    cell.onclick = ()=>toggleSlot(day,'evening');
+    grid.appendChild(cell);
   });
 }
 function toggleSlot(day, slot){
@@ -464,17 +617,109 @@ function toggleSlot(day, slot){
   state.weekSchedule[day][slot] = !state.weekSchedule[day][slot];
   renderWeekGrid();
 }
-function saveWeekSchedule(){
+function renderWeekPlanPreview(){
+  const el = document.getElementById('weekPlanPreview');
+  if(!el) return;
+  const rows = [];
+  DAYS.forEach(day=>{
+    const dayPlan = state.weekPlan[day];
+    if(!dayPlan) return;
+    ['morning','evening'].forEach(slot=>{
+      const entry = dayPlan[slot];
+      if(!entry) return;
+      const label = LADDER_LABEL[entry.rung] + (entry.gymName ? ': '+entry.gymName : '');
+      rows.push({ day: DAY_LABELS[day], slot: slot==='morning'?'AM':'PM', label, tag: entry.rung, tagClass: entry.rung==='gym'?'gym':'' });
+    });
+  });
+  if(rows.length===0){
+    el.innerHTML = '<div class="empty">Save the week above to set this week\'s plan.</div>';
+    return;
+  }
+  el.innerHTML = rows.map(r=>`
+    <div class="report-line">
+      <span><strong class="line-label">${r.day} ${r.slot}</strong>${r.label}</span>
+      <span class="tag ${r.tagClass}">${r.tag}</span>
+    </div>`).join('');
+}
+
+function formatTime12h(t){
+  if(!t) return '';
+  const [h,m] = t.split(':').map(Number);
+  const period = h >= 12 ? 'pm' : 'am';
+  const h12 = ((h+11)%12)+1;
+  return `${h12}:${m<10?'0':''}${m}${period}`;
+}
+
+function renderBookingList(){
+  const el = document.getElementById('bookingList');
+  if(!el) return;
+  const rows = [];
+  DAYS.forEach(day=>{
+    const dayPlan = state.weekPlan[day];
+    if(!dayPlan) return;
+    ['morning','evening'].forEach(slot=>{
+      const entry = dayPlan[slot];
+      if(!entry || entry.rung !== 'gym') return;
+      if(entry.needsBooking === false) return;
+      const booked = !!(state.weekBookings[day] && state.weekBookings[day][slot]);
+      rows.push({ day, slot, label: `${DAY_LABELS[day]} ${formatTime12h(entry.gymTime)} — ${entry.gymName}`, booked });
+    });
+  });
+  if(rows.length===0){
+    el.innerHTML = '<div class="empty">Nothing to book this week.</div>';
+    return;
+  }
+  el.innerHTML = rows.map(r=>`
+    <div class="report-line">
+      <span>${r.label}</span>
+      <span class="toggle ${r.booked?'on':''}" onclick="toggleBooking('${r.day}','${r.slot}')">${r.booked?'Booked':'Book'}</span>
+    </div>`).join('');
+}
+
+function toggleBooking(day, slot){
   const weekStart = toISO(weekStartOf(new Date()));
+  const current = !!(state.weekBookings[day] && state.weekBookings[day][slot]);
+  db.ref('move/weekBookings/'+weekStart+'/'+day+'/'+slot).set(!current);
+}
+function saveWeekSchedule(){
+  const weekStartDate = weekStartOf(new Date());
+  const weekStart = toISO(weekStartDate);
+  const plan = generateWeekPlan(weekStartDate, state.weekSchedule);
   db.ref('move/weekSchedule/'+weekStart).set(state.weekSchedule).then(()=>{
-    alert('Week saved.');
+    return db.ref('move/weekPlan/'+weekStart).set(plan);
+  }).then(()=>{
+    // a regenerated plan invalidates any earlier "booked" ticks
+    return db.ref('move/weekBookings/'+weekStart).set(null);
+  }).then(()=>{
+    alert('Week planned.');
+    state.weekPlan = plan;
+    state.weekBookings = {};
     renderToday();
+    renderWeekPlanPreview();
+    renderBookingList();
   });
 }
 
 /* ============================================================
    GYM TIMETABLE SETUP
    ============================================================ */
+const CLASS_TYPES = ['strength','cardio','pilates','mobility','other'];
+const CLASS_TYPE_LABEL = {strength:'Strength', cardio:'Cardio', pilates:'Pilates', mobility:'Mobility', other:'Other'};
+
+function classifyClassType(name){
+  const n = (name||'').toLowerCase();
+  if(n.includes('pilates')) return 'pilates';
+  if(n.includes('stretch') || n.includes('mobility')) return 'mobility';
+  if(n.includes('spin') || n.includes('hyrox') || n.includes('amrap') || n.includes('aquafit') ||
+     n.includes('active fit') || n.includes('abs blast') || n.includes('dance') || n.includes('box & burn') || n.includes('box and burn')){
+    return 'cardio';
+  }
+  if(n.includes('bodypump') || n.includes('kettlebell') || n.includes('strength') || n.includes('trx') || n.includes('athx')){
+    return 'strength';
+  }
+  return 'other';
+}
+
 function renderTimetable(){
   const list = document.getElementById('timetableList');
   list.innerHTML = '';
@@ -482,12 +727,19 @@ function renderTimetable(){
     const classes = state.timetable[day] || [];
     const dayBlock = document.createElement('div');
     dayBlock.style.marginBottom = '14px';
-    let rows = classes.map((c,i)=>`
+    let rows = classes.map((c,i)=>{
+      const needsBooking = c.booking !== false;
+      return `
       <div class="timetable-class">
         <input type="time" value="${c.time||''}" onchange="updateTimetableField('${day}',${i},'time',this.value)">
         <input type="text" value="${c.name||''}" placeholder="Class name" onchange="updateTimetableField('${day}',${i},'name',this.value)">
+        <select onchange="updateTimetableField('${day}',${i},'type',this.value)">
+          ${CLASS_TYPES.map(t=>`<option value="${t}" ${c.type===t?'selected':''}>${CLASS_TYPE_LABEL[t]}</option>`).join('')}
+        </select>
+        <span class="toggle ${needsBooking?'on':''}" onclick="toggleTimetableBooking('${day}',${i})">Book</span>
         <span class="remove-x" onclick="removeTimetableRow('${day}',${i})">&times;</span>
-      </div>`).join('');
+      </div>`;
+    }).join('');
     dayBlock.innerHTML = `<div style="font-weight:600;font-size:13px;margin-bottom:6px;">${DAY_LABELS[day]}</div>${rows || '<div class="empty" style="padding:6px 0;text-align:left;">No classes</div>'}
       <button class="btn-text" style="padding:6px 0;" onclick="addTimetableRow('${day}')">+ add</button>`;
     list.appendChild(dayBlock);
@@ -496,14 +748,26 @@ function renderTimetable(){
 function addTimetableRow(day){
   day = day || 'mon';
   if(!state.timetable[day]) state.timetable[day] = [];
-  state.timetable[day].push({time:'', name:''});
+  state.timetable[day].push({time:'', name:'', type:'other'});
   renderTimetable();
 }
 function updateTimetableField(day, idx, field, value){
   state.timetable[day][idx][field] = value;
+  if(field==='type'){
+    state.timetable[day][idx].typeManuallySet = true;
+  }
+  if(field==='name' && !state.timetable[day][idx].typeManuallySet){
+    state.timetable[day][idx].type = classifyClassType(value);
+    renderTimetable();
+  }
 }
 function removeTimetableRow(day, idx){
   state.timetable[day].splice(idx,1);
+  renderTimetable();
+}
+function toggleTimetableBooking(day, idx){
+  const current = state.timetable[day][idx].booking !== false;
+  state.timetable[day][idx].booking = !current;
   renderTimetable();
 }
 function saveTimetable(){
@@ -544,7 +808,12 @@ function weekCountsSoFar(weekStart){
         if(entry && entry.completed && !entry.skipped){
           if(entry.rung==='strength') counts.strength++;
           if(entry.rung==='cardio') counts.cardio++;
-          if(entry.rung==='gym' && isPilatesClass(entry.gymName)) counts.pilates++;
+          if(entry.rung==='gym'){
+            const t = entry.gymType || classifyClassType(entry.gymName);
+            if(t==='strength') counts.strength++;
+            if(t==='cardio') counts.cardio++;
+            if(t==='pilates') counts.pilates++;
+          }
         }
       });
     }
@@ -563,38 +832,87 @@ function pruneLadder(date, slot){
   return LADDER.filter(rung => rung !== 'gym' || gymOptions.length > 0);
 }
 
+function pickRungForSlot(counts, pruned, gymOptionsRaw){
+  const gymOptions = gymOptionsRaw.map(c=>({...c, type: c.type || classifyClassType(c.name)}));
+  const pilatesClass = gymOptions.find(c=>c.type==='pilates');
+  const strengthClass = gymOptions.find(c=>c.type==='strength');
+  const cardioClass = gymOptions.find(c=>c.type==='cardio');
+
+  let rung, gymClass = null;
+  if(counts.pilates < BASELINE.pilates && pilatesClass){
+    rung = 'gym'; gymClass = pilatesClass;
+  } else if(counts.strength < BASELINE.strength){
+    if(strengthClass){ rung = 'gym'; gymClass = strengthClass; }
+    else { rung = pruned.includes('strength') ? 'strength' : pruned[pruned.length-1]; }
+  } else if(counts.cardio < BASELINE.cardio){
+    if(cardioClass){ rung = 'gym'; gymClass = cardioClass; }
+    else { rung = pruned.includes('cardio') ? 'cardio' : 'walk'; }
+  } else {
+    rung = 'walk';
+  }
+  if(!pruned.includes(rung)) rung = pruned[Math.min(pruned.indexOf('walk')>=0?pruned.indexOf('walk'):pruned.length-1, pruned.length-1)];
+  if(rung !== 'gym') gymClass = null;
+
+  let contributes = null;
+  if(rung === 'gym' && gymClass){
+    if(['strength','cardio','pilates'].includes(gymClass.type)) contributes = gymClass.type;
+  } else if(rung === 'strength'){
+    contributes = 'strength';
+  } else if(rung === 'cardio'){
+    contributes = 'cardio';
+  }
+
+  return { rung, gymName: gymClass ? gymClass.name : null, gymType: gymClass ? gymClass.type : null,
+            gymTime: gymClass ? gymClass.time : null, needsBooking: gymClass ? (gymClass.booking !== false) : null,
+            contributes };
+}
+
 function decideSuggestion(date, slot){
   const day = dayKey(date);
   const weekStart = weekStartOf(date);
   const counts = weekCountsSoFar(weekStart);
   const pruned = pruneLadder(date, slot);
   const gymOptions = classAvailable(day, slot);
+  const picked = pickRungForSlot(counts, pruned, gymOptions);
+  return { rung: picked.rung, prunedLadder: pruned, gymName: picked.gymName, gymType: picked.gymType,
+           gymTime: picked.gymTime, needsBooking: picked.needsBooking };
+}
 
-  let rung;
-  if(counts.pilates < BASELINE.pilates && gymOptions.some(c=>isPilatesClass(c.name))){
-    rung = 'gym';
-  } else if(counts.strength < BASELINE.strength){
-    rung = pruned.includes('strength') ? 'strength' : pruned[pruned.length-1];
-  } else if(counts.cardio < BASELINE.cardio){
-    rung = pruned.includes('cardio') ? 'cardio' : 'walk';
-  } else {
-    rung = 'walk';
-  }
-  if(!pruned.includes(rung)) rung = pruned[Math.min(pruned.indexOf('walk')>=0?pruned.indexOf('walk'):pruned.length-1, pruned.length-1)];
-
-  const gymName = rung==='gym' ? (gymOptions[0] && gymOptions[0].name) : null;
-  return { rung, prunedLadder: pruned, gymName };
+/* Commits the whole week's content in one pass at Sunday-save time, the same
+   way Eat commits a week of dinners — each eligible slot gets a fixed session,
+   assuming the plan gets followed, rather than recomputing live day to day. */
+function generateWeekPlan(weekStart, schedule){
+  const plan = {};
+  const counts = { strength: 0, cardio: 0, pilates: 0 };
+  DAYS.forEach((day, idx)=>{
+    const date = addDays(weekStart, idx);
+    const daySched = schedule[day] || { morning: false, evening: false };
+    plan[day] = {};
+    ['morning','evening'].forEach(slot=>{
+      if(!daySched[slot]){ plan[day][slot] = null; return; }
+      const pruned = pruneLadder(date, slot);
+      const gymOptions = classAvailable(day, slot);
+      const picked = pickRungForSlot(counts, pruned, gymOptions);
+      plan[day][slot] = { rung: picked.rung, gymName: picked.gymName, gymType: picked.gymType,
+                           gymTime: picked.gymTime, needsBooking: picked.needsBooking, prunedLadder: pruned };
+      if(picked.contributes) counts[picked.contributes]++;
+    });
+  });
+  return plan;
 }
 
 function getOrCreateTodayEntry(date, slot){
   const iso = toISO(date);
   const existing = state.dailyLog[iso] && state.dailyLog[iso][slot];
   if(existing) return existing;
-  const decision = decideSuggestion(date, slot);
+  const day = dayKey(date);
+  const planned = state.weekPlan[day] && state.weekPlan[day][slot];
+  const decision = planned || decideSuggestion(date, slot);
   return {
     rung: decision.rung,
     gymName: decision.gymName,
-    prunedLadder: decision.prunedLadder,
+    gymType: decision.gymType,
+    prunedLadder: decision.prunedLadder || pruneLadder(date, slot),
     adjustment: null,
     completed: false,
     skipped: false
@@ -624,10 +942,10 @@ function renderToday(){
 
   let body;
   if(entry.skipped){
-    body = `<div class="done-state">Skipped today.</div>
+    body = `<div class="done-state is-skipped"><span class="check-badge is-skip">&ndash;</span>Skipped today.</div>
       <div class="skip-row"><button class="btn-text" onclick="undoState('${slot}')">Undo</button></div>`;
   } else if(entry.completed){
-    body = `<div class="done-state">Done — ${LADDER_LABEL[entry.rung]}${entry.gymName?': '+entry.gymName:''}.</div>
+    body = `<div class="done-state"><span class="check-badge">&#10003;</span>Done — ${LADDER_LABEL[entry.rung]}${entry.gymName?': '+entry.gymName:''}.</div>
       <div class="skip-row"><button class="btn-text" onclick="undoState('${slot}')">Undo</button></div>`;
   } else {
     body = `
@@ -659,7 +977,14 @@ function adjust(slot, direction){
   idx = Math.max(0, Math.min(pruned.length-1, idx+direction));
   entry.rung = pruned[idx];
   entry.adjustment = direction < 0 ? 'more' : 'less';
-  entry.gymName = entry.rung==='gym' ? (classAvailable(dayKey(today), slot)[0]||{}).name : null;
+  if(entry.rung==='gym'){
+    const opt = classAvailable(dayKey(today), slot)[0] || {};
+    entry.gymName = opt.name || null;
+    entry.gymType = opt.type || classifyClassType(opt.name);
+  } else {
+    entry.gymName = null;
+    entry.gymType = null;
+  }
   saveTodayEntry(slot, entry);
 }
 
@@ -691,10 +1016,17 @@ function undoState(slot){
    LEDGER (outside activity)
    ============================================================ */
 let ledgerSelectedType = null;
+let ledgerSelectedFocus = null;
+const FOCUS_TAGS = ['Full body','Upper','Lower','Push','Pull'];
+
 function openLedgerModal(){
   ledgerSelectedType = null;
+  ledgerSelectedFocus = null;
   const grid = document.getElementById('ledgerTypeGrid');
   grid.innerHTML = LEDGER_TYPES.map(t=>`<div class="type-chip" onclick="selectLedgerType(this,'${t}')">${t}</div>`).join('');
+  const focusGrid = document.getElementById('focusGrid');
+  focusGrid.innerHTML = FOCUS_TAGS.map(f=>`<div class="type-chip" onclick="selectLedgerFocus(this,'${f}')">${f}</div>`).join('');
+  document.getElementById('focusField').classList.add('hidden');
   document.getElementById('ledgerNotes').value = '';
   document.getElementById('ledgerModal').classList.remove('hidden');
 }
@@ -702,16 +1034,31 @@ function closeLedgerModal(){
   document.getElementById('ledgerModal').classList.add('hidden');
 }
 function selectLedgerType(el, type){
-  document.querySelectorAll('.type-chip').forEach(c=>c.classList.remove('sel'));
+  document.querySelectorAll('#ledgerTypeGrid .type-chip').forEach(c=>c.classList.remove('sel'));
   el.classList.add('sel');
   ledgerSelectedType = type;
+  document.getElementById('focusField').classList.toggle('hidden', type !== 'Strength (Strong)');
+}
+function selectLedgerFocus(el, focus){
+  const already = el.classList.contains('sel');
+  document.querySelectorAll('#focusGrid .type-chip').forEach(c=>c.classList.remove('sel'));
+  if(!already){
+    el.classList.add('sel');
+    ledgerSelectedFocus = focus;
+  } else {
+    ledgerSelectedFocus = null;
+  }
 }
 function saveLedgerEntry(){
   if(!ledgerSelectedType){ alert('Pick what you did.'); return; }
   const iso = toISO(new Date());
   const notes = document.getElementById('ledgerNotes').value;
   const ref = db.ref('move/ledger/'+iso).push();
-  ref.set({type: ledgerSelectedType, notes: notes, loggedAt: Date.now()});
+  const entry = {type: ledgerSelectedType, notes: notes, loggedAt: Date.now()};
+  if(ledgerSelectedType === 'Strength (Strong)' && ledgerSelectedFocus){
+    entry.focus = ledgerSelectedFocus;
+  }
+  ref.set(entry);
   closeLedgerModal();
 }
 function renderTodayLedger(){
@@ -722,7 +1069,8 @@ function renderTodayLedger(){
   if(keys.length===0){ list.innerHTML=''; return; }
   list.innerHTML = '<div style="margin-top:8px;">' + keys.map(k=>{
     const e = entries[k];
-    return `<div class="ledger-item"><span>${e.type}${e.notes?' — '+e.notes:''}</span><span class="tag outside">logged</span></div>`;
+    const label = e.type + (e.focus ? ' — '+e.focus : '') + (e.notes ? ' — '+e.notes : '');
+    return `<div class="ledger-item"><span>${label}</span><span class="tag outside">logged</span></div>`;
   }).join('') + '</div>';
 }
 
@@ -756,7 +1104,8 @@ function renderReport(){
     });
     const ledgerDay = state.ledger[iso] || {};
     Object.values(ledgerDay).forEach(e=>{
-      lines.push({label, text: e.type + (e.notes?' — '+e.notes:''), tagClass:'outside', tag:'logged'});
+      const text = e.type + (e.focus ? ' — '+e.focus : '') + (e.notes ? ' — '+e.notes : '');
+      lines.push({label, text, tagClass:'outside', tag:'logged'});
     });
   }
 
@@ -767,7 +1116,7 @@ function renderReport(){
   }
   body.innerHTML = lines.map(l=>`
     <div class="report-line">
-      <span><strong style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-faint);margin-right:8px;">${l.label}</strong>${l.text}</span>
+      <span><strong class="line-label">${l.label}</strong>${l.text}</span>
       <span class="tag ${l.tagClass}">${l.tag}</span>
     </div>`).join('');
 }
