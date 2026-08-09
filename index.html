@@ -761,16 +761,29 @@ function toggleBooking(day, slot){
 function saveWeekSchedule(){
   const weekStartDate = weekStartOf(new Date());
   const weekStart = toISO(weekStartDate);
-  const plan = generateWeekPlan(weekStartDate, state.weekSchedule);
+  const previousPlan = state.weekPlan || {};
+  const plan = generateWeekPlanPreservingOverrides(weekStartDate, state.weekSchedule, previousPlan);
+
+  // only clear a "booked" tick for a slot whose plan actually changed —
+  // slots we preserved as-is keep whatever booking status they already had
+  const bookingClears = [];
+  DAYS.forEach(day=>{
+    ['morning','evening'].forEach(slot=>{
+      const before = previousPlan[day] && previousPlan[day][slot];
+      const after = plan[day] && plan[day][slot];
+      if(JSON.stringify(before||null) !== JSON.stringify(after||null)){
+        bookingClears.push(db.ref('move/weekBookings/'+weekStart+'/'+day+'/'+slot).set(null));
+      }
+    });
+  });
+
   db.ref('move/weekSchedule/'+weekStart).set(state.weekSchedule).then(()=>{
     return db.ref('move/weekPlan/'+weekStart).set(plan);
   }).then(()=>{
-    // a regenerated plan invalidates any earlier "booked" ticks
-    return db.ref('move/weekBookings/'+weekStart).set(null);
+    return Promise.all(bookingClears);
   }).then(()=>{
     alert('Week planned.');
     state.weekPlan = plan;
-    state.weekBookings = {};
     renderToday();
     renderWeekPlanPreview();
     renderBookingList();
@@ -969,6 +982,49 @@ function generateWeekPlan(weekStart, schedule){
     plan[day] = {};
     ['morning','evening'].forEach(slot=>{
       if(!daySched[slot]){ plan[day][slot] = null; return; }
+
+      if(day === 'mon' && lock && lock.slot === slot){
+        plan[day][slot] = { rung: 'gym', gymName: lock.gymName, gymType: 'pilates', gymTime: lock.gymTime,
+                             needsBooking: lock.needsBooking, prunedLadder: pruneLadder(date, slot) };
+        counts.pilates++;
+        return;
+      }
+
+      const pruned = pruneLadder(date, slot);
+      const picked = pickRungForSlot(counts, pruned);
+      plan[day][slot] = { rung: picked.rung, gymName: picked.gymName, gymType: picked.gymType,
+                           gymTime: picked.gymTime, needsBooking: picked.needsBooking, prunedLadder: pruned };
+      if(picked.contributes) counts[picked.contributes]++;
+    });
+  });
+  return plan;
+}
+
+/* Re-saving the week (e.g. after tweaking one day's on/off) must never wipe out
+   choices you already made via the plan dropdowns. This keeps whatever's already
+   set for a still-eligible slot exactly as-is, and only decides fresh for slots
+   that are newly eligible or didn't have anything set yet. */
+function generateWeekPlanPreservingOverrides(weekStart, schedule, existingPlan){
+  const plan = {};
+  const counts = { strength: 0, pilates: 0 };
+  const lock = findPilatesLockSlot(schedule);
+  const prior = existingPlan || {};
+
+  DAYS.forEach((day, idx)=>{
+    const date = addDays(weekStart, idx);
+    const daySched = schedule[day] || { morning: false, evening: false };
+    plan[day] = {};
+    ['morning','evening'].forEach(slot=>{
+      if(!daySched[slot]){ plan[day][slot] = null; return; }
+
+      const existing = prior[day] && prior[day][slot];
+      if(existing){
+        plan[day][slot] = existing;
+        if(existing.rung === 'strength') counts.strength++;
+        if(existing.rung === 'gym' && existing.gymType === 'strength') counts.strength++;
+        if(existing.rung === 'gym' && existing.gymType === 'pilates') counts.pilates++;
+        return;
+      }
 
       if(day === 'mon' && lock && lock.slot === slot){
         plan[day][slot] = { rung: 'gym', gymName: lock.gymName, gymType: 'pilates', gymTime: lock.gymTime,
