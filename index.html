@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Move</title>
+<link rel="icon" type="image/png" sizes="16x16" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAgUlEQVR4nGNkgAL9vOj/DCSCi5OWMjKSqxkGmCjRzMDAwMBEiWaSDJjF+59hFi+mY4kyAFkjuiFEGaBbMx3OTvvMSJoBxzunwQ1B14zXgOOd0xiOd05jsCzPYmBgYIDTRBuADHBpJtoAfIAFXQDmZ3y2UtUFjAOflC9OWooZuSQAAPjvI9oTS/i8AAAAAElFTkSuQmCC">
+<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA5klEQVR4nN2XMQ6DMAxF7agrZ+nMWdgZGLpyhqwMDOycJTNn4QB0SmSiVEmEExf+hKHSe3xHrYoQyPvTHaH7HNmmFel8GkqCf4koCTjloQScRsU/UlhA8u0B/qGBRwoszQFLk7ZZdgEKTpFgFQgBYxLPOgP9jkn3aF4cYKNnd92Og6s9BgdgaIDC7dzvmARnEbiaewoYPbvq23E4PfPnWDD3x8jfeS7Qzz1XICpAK79aP0DiGTB6ZoGFEm3AHjr/8FUTKJ2ogK2+1Aqyvwe4I78C/79adQFJuBOQamGbVlR0qA0HAPgCVKNNd6FqoZ0AAAAASUVORK5CYII=">
+<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAEgklEQVR4nO3dO3bjRhRF0aJWpx6LY4/FuQMHTj0GpwocONdYHGssPQA7Yi+JAkgALFShLvZOW/wER6+fiA8v5QB+/uPX/3q/B+p4f3279Hz9Li8u4PNoHXizFxMxLeLe9QVEzJy94t7lSYXMUrXDfqn5ZKWImXVq91Ltt0PIPKvGtK4yocVMDTU6euo3QsjsZeu03jyhxcyetva1KWgx08KWzlYHLWZaWtvbqqDFTA9rulsctJjpaWl/i4IWM0ewpMOHQYuZI3nUY/VD39DT3aBNZ47oXpezQYuZI5vr08pBlMmgTWdGMNXpl6DFzEhue7VyEOVT0KYzI/rYrQlNFEET5UfQ1g1Gdu3XhCaKoIlyKcW6QQ4TmiiCJoqgifJifyaJCU0UQRNF0EQRNFEETRRBE0XQRBE0UQRNFEETRdBEETRRBE2Ub73fAG3889P8SZW/fd/9O+WbEXS4eyHf/kxC2IIOtSTkuceMHLYdOtCWmGs+vidBh6kV46hRCzpI7QhHjFrQIfaKb7SoBU0UQQfYe4qONKUFTRRBD67V9BxlSguaKIImiqCJImiiCJoogiaKoIki6MG1Ond5lHOkBU0UQQfYe3qOMp1LETRhBB1iryk60nQuRdBRasc3WsylCDpOrQhHjLkUQUd6NsZRYy7FfTkO49+//p79t1/+/H31812jXHMe88ghX1188WZf90K+tSXsq7PcCkzQHa2J+eqZqM/ADt3JlpifedxZCLqDZ6MU9TxBN1YrRlFPE3RDtSMU9VeCJoqgiSLoRvZaD6wdnwmaKIImiqCJImiiCJoogm5kr5OKnKz0maCJImiiCLqh2uuBdeMrQTdWK0IxTxN0B8/GKOZ5gu5ka5Rivk/QHa2NU8yPuUj2IGrfxuCsBE0UKwdRBE0UtwJbaG7Htd8eix36gaWXOAn7GAQ9Y+u1esLuyw494ZkLT1202pegiSLoGzUmrCndj6CJIugPak5WU7oPQRNF0EQRNFEETRRBf1DzKJ8jhn0ImiiCvlFjsprO/QiaKIKe8MyENZ37cvroA86HHougF3LFyhgETRQ7NFEETRRBE0XQRBE0UQRNlJg7J019Tuwz4vMZ/nPoJUfyhH0eQ68cSw9Lu2D1PIYNem2koj6HYYOGKUMGvXXamtL5hgwa5giaKIImiqCJMmTQvoWVOUMGDXOGDdrXCjNl2KBLWR6pmM9j+JOTrpxtRylBQUMpg68ccEvQRBE0UQRNFEETRdBEeXl/fbv0fhNQiwlNFEETRdBEeSmlFHs0Cd5f3y4mNFEETZQfQVs7GNm1XxOaKIImyqegrR2M6GO3JjRRvgRtSjOS214nJ7SoGcFUp1YOoswGbUpzZHN93p3QouaI7nVp5SDKw6BNaY7kUY+LJrSoOYIlHS5eOURNT0v7W7VDi5oe1nS3+o9CUdPS2t42fcohalrY0tnmj+1EzZ629lUlSveYppZnB2WVAyumNTXU6Kh6iKY1a9UciNUPfZvWrFG7l13jM62Zs9fgazZNxU2L/727rAfiPo/WK+j/w5Jq4t8S6SgAAAAASUVORK5CYII=">
+<link rel="icon" type="image/png" sizes="512x512" href="data:image/png;base64,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">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Move">
+<meta name="theme-color" content="#2F6E5B">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F1F3EE;
+    --surface: #FBFBF8;
+    --ink: #16221C;
+    --ink-soft: #55665C;
+    --ink-faint: #8B978C;
+    --primary: #2F6E5B;
+    --primary-dark: #234F41;
+    --on-primary: #F6F7F1;
+    --accent-warm: #C97B5A;
+    --line: #DCE0D5;
+    --rung-dim: #C7CDC0;
+    --radius: 18px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    max-width:520px;
+    margin:0 auto;
+    padding:0 0 96px 0;
+    min-height:100vh;
+  }
+  header.top{
+    padding:28px 22px 18px 22px;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+  }
+  header.top .wordmark{
+    font-family:'Fraunces',serif;
+    font-size:22px;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  header.top .date{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--ink-faint);
+  }
+  main{padding:0 18px;}
+  section{display:none;}
+  section.active{display:block;}
+
+  /* ---- Today card ---- */
+  .today-wrap{
+    display:flex;
+    gap:14px;
+    align-items:stretch;
+  }
+  .rung-rail{
+    width:22px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:space-between;
+    padding:20px 0;
+  }
+  .rung-tick{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--rung-dim);
+    transition:all .2s ease;
+  }
+  .rung-tick.active{
+    width:14px;height:14px;
+    background:var(--primary);
+  }
+  .rung-tick.gym.active{background:var(--accent-warm);}
+  .rail-line{
+    position:absolute;
+    width:2px;background:var(--line);
+    left:11px;top:20px;bottom:20px;
+    z-index:0;
+  }
+  .rung-rail{position:relative;z-index:1;}
+
+  .today-card{
+    flex:1;
+    background:var(--surface);
+    border-radius:var(--radius);
+    padding:26px 22px;
+    box-shadow:0 1px 2px rgba(20,30,24,0.04);
+    border:1px solid var(--line);
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--ink-faint);
+    margin-bottom:10px;
+  }
+  .decision{
+    font-family:'Fraunces',serif;
+    font-size:30px;
+    font-weight:500;
+    line-height:1.15;
+    margin:0 0 6px 0;
+  }
+  .decision-sub{
+    font-size:14px;
+    color:var(--ink-soft);
+    margin:0 0 22px 0;
+  }
+  .not-eligible{
+    font-family:'Fraunces',serif;
+    font-size:22px;
+    color:var(--ink-soft);
+    padding:10px 0 4px 0;
+  }
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+  button{
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    font-weight:600;
+    border:none;
+    border-radius:12px;
+    padding:12px 16px;
+    cursor:pointer;
+    transition:transform .08s ease, opacity .15s ease;
+  }
+  button:active{transform:scale(0.97);}
+  .btn-primary{background:var(--primary);color:var(--on-primary);flex:1;}
+  .btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--ink-faint);}
+  .btn-text{background:none;color:var(--ink-faint);font-weight:500;padding:12px 4px;}
+  .done-state{
+    display:flex;align-items:center;gap:10px;
+    font-family:'Fraunces',serif;font-size:20px;color:var(--primary-dark);
+  }
+  .skip-row{margin-top:14px;text-align:right;}
+
+  /* ---- Nav ---- */
+  nav.tabbar{
+    position:fixed;bottom:0;left:0;right:0;
+    background:var(--surface);
+    border-top:1px solid var(--line);
+    display:flex;
+    max-width:520px;margin:0 auto;
+  }
+  nav.tabbar button{
+    flex:1;background:none;border-radius:0;
+    padding:14px 4px 12px 4px;
+    color:var(--ink-faint);
+    font-size:11px;font-weight:600;letter-spacing:0.02em;
+  }
+  nav.tabbar button.active{color:var(--primary);}
+
+  /* ---- Generic ---- */
+  h2.section-title{
+    font-family:'Fraunces',serif;font-weight:500;font-size:22px;
+    margin:22px 0 4px 0;
+  }
+  p.section-sub{color:var(--ink-soft);font-size:14px;margin:0 0 18px 0;}
+  .card{
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:16px 18px;margin-bottom:12px;
+  }
+  .day-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 0;border-bottom:1px solid var(--line);
+  }
+  .day-row:last-child{border-bottom:none;}
+  .day-label{font-weight:600;font-size:14px;width:44px;}
+  .slot-toggles{display:flex;gap:8px;}
+  .toggle{
+    font-size:12px;font-weight:600;padding:8px 12px;border-radius:10px;
+    border:1px solid var(--line);background:var(--bg);color:var(--ink-faint);
+    cursor:pointer;
+  }
+  .toggle.on{background:var(--primary);color:var(--on-primary);border-color:var(--primary);}
+  .save-bar{margin-top:16px;}
+
+  select, input[type=text], input[type=time]{
+    font-family:'Inter',sans-serif;font-size:14px;
+    padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    background:var(--bg);color:var(--ink);width:100%;
+  }
+  .field{margin-bottom:14px;}
+  .field label{font-size:12px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:6px;}
+
+  .timetable-class{
+    display:flex;gap:8px;align-items:center;margin-bottom:8px;
+  }
+  .timetable-class input{flex:1;}
+  .remove-x{color:var(--ink-faint);font-size:18px;cursor:pointer;padding:4px 8px;}
+
+  .ledger-item, .report-line{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;
+  }
+  .ledger-item:last-child, .report-line:last-child{border-bottom:none;}
+  .tag{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;
+    padding:3px 8px;border-radius:6px;background:var(--bg);color:var(--ink-soft);
+  }
+  .tag.skipped{background:#EFE4DC;color:var(--accent-warm);}
+  .tag.gym{background:#EFE4DC;color:var(--accent-warm);}
+  .tag.outside{background:#E4EAE1;color:var(--primary-dark);}
+
+  .empty{
+    text-align:center;color:var(--ink-faint);font-size:14px;padding:30px 0;
+  }
+
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(20,30,24,0.35);
+    display:flex;align-items:flex-end;justify-content:center;z-index:50;
+  }
+  .modal{
+    background:var(--surface);width:100%;max-width:520px;
+    border-radius:20px 20px 0 0;padding:22px;
+  }
+  .modal h3{font-family:'Fraunces',serif;font-weight:500;margin:0 0 16px 0;}
+  .type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+  .type-chip{
+    padding:12px 10px;border-radius:10px;border:1px solid var(--line);
+    background:var(--bg);text-align:center;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .type-chip.sel{background:var(--primary);color:var(--on-primary);border-color:var(--primary);}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="wordmark">Move</div>
+    <div class="date" id="headerDate"></div>
+  </header>
+
+  <main>
+
+    <!-- TODAY -->
+    <section id="tab-today" class="active">
+      <div id="todayContent"></div>
+
+      <div style="margin-top:26px;">
+        <button class="btn-text" onclick="openLedgerModal()">+ Log something I did</button>
+      </div>
+
+      <div id="ledgerTodayList"></div>
+    </section>
+
+    <!-- WEEK SETUP -->
+    <section id="tab-week">
+      <h2 class="section-title">This week</h2>
+      <p class="section-sub">Mark when you're off with Jack — mornings and evenings. Move only suggests something on off slots.</p>
+      <div class="card" id="weekGrid"></div>
+      <div class="save-bar">
+        <button class="btn-primary" style="width:100%" onclick="saveWeekSchedule()">Save week</button>
+      </div>
+
+      <h2 class="section-title">Gym timetable</h2>
+      <p class="section-sub">Classes you could go to. Move only suggests a class when one is actually on.</p>
+      <div class="card" id="timetableList"></div>
+      <button class="btn-ghost" style="width:100%;margin-top:8px;" onclick="addTimetableRow()">+ Add class</button>
+      <div class="save-bar">
+        <button class="btn-primary" style="width:100%" onclick="saveTimetable()">Save timetable</button>
+      </div>
+    </section>
+
+    <!-- REPORT -->
+    <section id="tab-report">
+      <h2 class="section-title">Last week</h2>
+      <p class="section-sub" id="reportRange"></p>
+      <div class="card" id="reportBody"></div>
+    </section>
+
+  </main>
+
+  <nav class="tabbar">
+    <button id="navToday" class="active" onclick="switchTab('today')">TODAY</button>
+    <button id="navWeek" onclick="switchTab('week')">WEEK</button>
+    <button id="navReport" onclick="switchTab('report')">REPORT</button>
+  </nav>
+
+  <!-- Ledger modal -->
+  <div class="modal-overlay hidden" id="ledgerModal">
+    <div class="modal">
+      <h3>What did you do?</h3>
+      <div class="type-grid" id="ledgerTypeGrid"></div>
+      <div class="field">
+        <label>Notes (optional)</label>
+        <input type="text" id="ledgerNotes" placeholder="e.g. 45 min, felt strong">
+      </div>
+      <div class="btn-row">
+        <button class="btn-ghost" style="flex:1" onclick="closeLedgerModal()">Cancel</button>
+        <button class="btn-primary" style="flex:1" onclick="saveLedgerEntry()">Save</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+/* ============================================================
+   FIREBASE SETUP
+   Replace with your own project config (see setup notes).
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBRnoJsSuUf4JkD9WlxEJRoQU1lLoUJpr8",
+  authDomain: "move-app-c2306.firebaseapp.com",
+  databaseURL: "https://move-app-c2306-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "move-app-c2306",
+  storageBucket: "move-app-c2306.firebasestorage.app",
+  messagingSenderId: "842331384261",
+  appId: "1:842331384261:web:0b1a8c8e3d815616bb83ac"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ============================================================
+   CONSTANTS
+   ============================================================ */
+const DAYS = ['mon','tue','wed','thu','fri','sat','sun'];
+const DAY_LABELS = {mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun'};
+
+// Ladder, most intense -> least intense
+const LADDER = ['gym','cardio','strength','walk','stretch'];
+const LADDER_LABEL = {
+  gym: 'Gym class',
+  cardio: 'Cardio session',
+  strength: 'Strength workout',
+  walk: 'Walk',
+  stretch: 'Stretch'
+};
+const LADDER_SUB = {
+  gym: 'A class is on around this slot.',
+  cardio: 'A run, or whatever gets your heart rate up.',
+  strength: 'Your own session — whatever split makes sense.',
+  walk: 'Nothing structured. Just get outside and move.',
+  stretch: 'Ten minutes is enough. Mobility, not effort.'
+};
+
+// Invisible weekly baseline — never shown to the user
+const BASELINE = { strength: 2, cardio: 1, pilates: 1 };
+
+// Outside-activity ledger types
+const LEDGER_TYPES = ['Strength (Strong)','Pilates class','Golf','Squash','Football','Tennis','Walk','Hike','Other'];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let state = {
+  weekSchedule: {},   // { "mon": {morning:true, evening:false}, ... } for the CURRENT week doc
+  timetable: {},       // { mon: [{time:"06:30", name:"HIIT"}], ... }
+  dailyLog: {},         // { "2026-08-09": { morning:{...}, evening:{...} } }
+  ledger: {}            // { "2026-08-09": { entryId: {type, notes, loggedAt} } }
+};
+
+/* ============================================================
+   DATE HELPERS
+   Week runs Monday -> Sunday. "Week start" = that Monday's ISO date.
+   ============================================================ */
+function pad(n){return n<10?'0'+n:''+n;}
+function toISO(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function dayKey(d){ // mon/tue/...
+  const idx = (d.getDay()+6)%7; // convert Sun=0 -> 6, Mon=1->0
+  return DAYS[idx];
+}
+function weekStartOf(d){
+  const copy = new Date(d);
+  const idx = (copy.getDay()+6)%7;
+  copy.setDate(copy.getDate()-idx);
+  copy.setHours(0,0,0,0);
+  return copy;
+}
+function addDays(d,n){const c=new Date(d);c.setDate(c.getDate()+n);return c;}
+function currentSlotNow(){
+  // crude: before 14:00 = morning, else evening
+  return new Date().getHours() < 14 ? 'morning' : 'evening';
+}
+
+/* ============================================================
+   FIREBASE LOAD
+   ============================================================ */
+function initApp(){
+  document.getElementById('headerDate').textContent =
+    new Date().toLocaleDateString('en-IE',{weekday:'long', day:'numeric', month:'long'});
+
+  const todayWeekStart = toISO(weekStartOf(new Date()));
+
+  db.ref('move/weekSchedule/'+todayWeekStart).on('value', snap=>{
+    state.weekSchedule = snap.val() || {};
+    renderWeekGrid();
+    renderToday();
+  });
+
+  db.ref('move/timetable').on('value', snap=>{
+    state.timetable = snap.val() || {};
+    renderTimetable();
+    renderToday();
+  });
+
+  db.ref('move/dailyLog').on('value', snap=>{
+    state.dailyLog = snap.val() || {};
+    renderToday();
+    renderReport();
+  });
+
+  db.ref('move/ledger').on('value', snap=>{
+    state.ledger = snap.val() || {};
+    renderTodayLedger();
+    renderReport();
+  });
+}
+
+/* ============================================================
+   TAB NAV
+   ============================================================ */
+function switchTab(name){
+  ['today','week','report'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('active', t===name);
+    document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===name);
+  });
+  if(name==='report') renderReport();
+}
+
+/* ============================================================
+   WEEK SETUP
+   ============================================================ */
+function renderWeekGrid(){
+  const grid = document.getElementById('weekGrid');
+  grid.innerHTML = '';
+  DAYS.forEach(day=>{
+    const val = state.weekSchedule[day] || {morning:false, evening:false};
+    const row = document.createElement('div');
+    row.className = 'day-row';
+    row.innerHTML = `
+      <div class="day-label">${DAY_LABELS[day]}</div>
+      <div class="slot-toggles">
+        <div class="toggle ${val.morning?'on':''}" onclick="toggleSlot('${day}','morning')">AM off</div>
+        <div class="toggle ${val.evening?'on':''}" onclick="toggleSlot('${day}','evening')">PM off</div>
+      </div>`;
+    grid.appendChild(row);
+  });
+}
+function toggleSlot(day, slot){
+  if(!state.weekSchedule[day]) state.weekSchedule[day] = {morning:false, evening:false};
+  state.weekSchedule[day][slot] = !state.weekSchedule[day][slot];
+  renderWeekGrid();
+}
+function saveWeekSchedule(){
+  const weekStart = toISO(weekStartOf(new Date()));
+  db.ref('move/weekSchedule/'+weekStart).set(state.weekSchedule).then(()=>{
+    alert('Week saved.');
+    renderToday();
+  });
+}
+
+/* ============================================================
+   GYM TIMETABLE SETUP
+   ============================================================ */
+function renderTimetable(){
+  const list = document.getElementById('timetableList');
+  list.innerHTML = '';
+  DAYS.forEach(day=>{
+    const classes = state.timetable[day] || [];
+    const dayBlock = document.createElement('div');
+    dayBlock.style.marginBottom = '14px';
+    let rows = classes.map((c,i)=>`
+      <div class="timetable-class">
+        <input type="time" value="${c.time||''}" onchange="updateTimetableField('${day}',${i},'time',this.value)">
+        <input type="text" value="${c.name||''}" placeholder="Class name" onchange="updateTimetableField('${day}',${i},'name',this.value)">
+        <span class="remove-x" onclick="removeTimetableRow('${day}',${i})">&times;</span>
+      </div>`).join('');
+    dayBlock.innerHTML = `<div style="font-weight:600;font-size:13px;margin-bottom:6px;">${DAY_LABELS[day]}</div>${rows || '<div class="empty" style="padding:6px 0;text-align:left;">No classes</div>'}
+      <button class="btn-text" style="padding:6px 0;" onclick="addTimetableRow('${day}')">+ add</button>`;
+    list.appendChild(dayBlock);
+  });
+}
+function addTimetableRow(day){
+  day = day || 'mon';
+  if(!state.timetable[day]) state.timetable[day] = [];
+  state.timetable[day].push({time:'', name:''});
+  renderTimetable();
+}
+function updateTimetableField(day, idx, field, value){
+  state.timetable[day][idx][field] = value;
+}
+function removeTimetableRow(day, idx){
+  state.timetable[day].splice(idx,1);
+  renderTimetable();
+}
+function saveTimetable(){
+  db.ref('move/timetable').set(state.timetable).then(()=>alert('Timetable saved.'));
+}
+function isPilatesClass(name){
+  return (name||'').toLowerCase().includes('pilates');
+}
+function classAvailable(day, slot){
+  const classes = state.timetable[day] || [];
+  return classes.filter(c=>{
+    if(!c.time) return false;
+    const hour = parseInt(c.time.split(':')[0],10);
+    return slot==='morning' ? hour < 12 : hour >= 12;
+  });
+}
+
+/* ============================================================
+   TODAY / SUGGESTION LOGIC
+   ============================================================ */
+function isEligible(date, slot){
+  const day = dayKey(date);
+  const sched = state.weekSchedule[day];
+  return !!(sched && sched[slot]);
+}
+
+function weekCountsSoFar(weekStart){
+  // counts completed strength/cardio/pilates sessions from Monday up to today
+  const counts = {strength:0, cardio:0, pilates:0};
+  for(let i=0;i<7;i++){
+    const d = addDays(weekStart, i);
+    if(d > new Date()) break;
+    const iso = toISO(d);
+    const log = state.dailyLog[iso];
+    if(log){
+      ['morning','evening'].forEach(slot=>{
+        const entry = log[slot];
+        if(entry && entry.completed && !entry.skipped){
+          if(entry.rung==='strength') counts.strength++;
+          if(entry.rung==='cardio') counts.cardio++;
+          if(entry.rung==='gym' && isPilatesClass(entry.gymName)) counts.pilates++;
+        }
+      });
+    }
+    const ledgerDay = state.ledger[iso] || {};
+    Object.values(ledgerDay).forEach(e=>{
+      if(e.type==='Pilates class') counts.pilates++;
+      if(e.type==='Strength (Strong)') counts.strength++;
+    });
+  }
+  return counts;
+}
+
+function pruneLadder(date, slot){
+  const day = dayKey(date);
+  const gymOptions = classAvailable(day, slot);
+  return LADDER.filter(rung => rung !== 'gym' || gymOptions.length > 0);
+}
+
+function decideSuggestion(date, slot){
+  const day = dayKey(date);
+  const weekStart = weekStartOf(date);
+  const counts = weekCountsSoFar(weekStart);
+  const pruned = pruneLadder(date, slot);
+  const gymOptions = classAvailable(day, slot);
+
+  let rung;
+  if(counts.pilates < BASELINE.pilates && gymOptions.some(c=>isPilatesClass(c.name))){
+    rung = 'gym';
+  } else if(counts.strength < BASELINE.strength){
+    rung = pruned.includes('strength') ? 'strength' : pruned[pruned.length-1];
+  } else if(counts.cardio < BASELINE.cardio){
+    rung = pruned.includes('cardio') ? 'cardio' : 'walk';
+  } else {
+    rung = 'walk';
+  }
+  if(!pruned.includes(rung)) rung = pruned[Math.min(pruned.indexOf('walk')>=0?pruned.indexOf('walk'):pruned.length-1, pruned.length-1)];
+
+  const gymName = rung==='gym' ? (gymOptions[0] && gymOptions[0].name) : null;
+  return { rung, prunedLadder: pruned, gymName };
+}
+
+function getOrCreateTodayEntry(date, slot){
+  const iso = toISO(date);
+  const existing = state.dailyLog[iso] && state.dailyLog[iso][slot];
+  if(existing) return existing;
+  const decision = decideSuggestion(date, slot);
+  return {
+    rung: decision.rung,
+    gymName: decision.gymName,
+    prunedLadder: decision.prunedLadder,
+    adjustment: null,
+    completed: false,
+    skipped: false
+  };
+}
+
+function renderToday(){
+  const container = document.getElementById('todayContent');
+  const today = new Date();
+  const slot = currentSlotNow();
+
+  if(!isEligible(today, slot)){
+    container.innerHTML = `<div class="not-eligible">Not a Move slot today.<br><span style="font-size:14px;color:var(--ink-faint);font-family:'Inter',sans-serif;">You're on with Jack — nothing to decide.</span></div>`;
+    return;
+  }
+
+  const entry = getOrCreateTodayEntry(today, slot);
+  const pruned = entry.prunedLadder || pruneLadder(today, slot);
+  const idx = pruned.indexOf(entry.rung);
+
+  let rail = '<div class="rail-line"></div>';
+  LADDER.forEach(r=>{
+    const isAvailableToday = pruned.includes(r);
+    const isActive = r === entry.rung;
+    rail += `<div class="rung-tick ${isActive?'active':''} ${r==='gym'?'gym':''}" style="opacity:${isAvailableToday?1:0.25}"></div>`;
+  });
+
+  let body;
+  if(entry.skipped){
+    body = `<div class="done-state">Skipped today.</div>
+      <div class="skip-row"><button class="btn-text" onclick="undoState('${slot}')">Undo</button></div>`;
+  } else if(entry.completed){
+    body = `<div class="done-state">Done — ${LADDER_LABEL[entry.rung]}${entry.gymName?': '+entry.gymName:''}.</div>
+      <div class="skip-row"><button class="btn-text" onclick="undoState('${slot}')">Undo</button></div>`;
+  } else {
+    body = `
+      <div class="eyebrow">${slot === 'morning' ? 'This morning' : 'This evening'}</div>
+      <div class="decision">${LADDER_LABEL[entry.rung]}${entry.gymName?' — '+entry.gymName:''}</div>
+      <div class="decision-sub">${LADDER_SUB[entry.rung]}</div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="markDone('${slot}')">Done</button>
+        ${idx>0 ? `<button class="btn-ghost" onclick="adjust('${slot}',-1)">I can do more</button>` : ''}
+        ${idx<pruned.length-1 ? `<button class="btn-ghost" onclick="adjust('${slot}',1)">I need less</button>` : ''}
+      </div>
+      <div class="skip-row"><button class="btn-text" onclick="skipToday('${slot}')">Skip today</button></div>
+    `;
+  }
+
+  container.innerHTML = `<div class="today-wrap"><div class="rung-rail">${rail}</div><div class="today-card">${body}</div></div>`;
+}
+
+function saveTodayEntry(slot, entry){
+  const iso = toISO(new Date());
+  db.ref('move/dailyLog/'+iso+'/'+slot).set(entry);
+}
+
+function adjust(slot, direction){
+  const today = new Date();
+  const entry = getOrCreateTodayEntry(today, slot);
+  const pruned = entry.prunedLadder || pruneLadder(today, slot);
+  let idx = pruned.indexOf(entry.rung);
+  idx = Math.max(0, Math.min(pruned.length-1, idx+direction));
+  entry.rung = pruned[idx];
+  entry.adjustment = direction < 0 ? 'more' : 'less';
+  entry.gymName = entry.rung==='gym' ? (classAvailable(dayKey(today), slot)[0]||{}).name : null;
+  saveTodayEntry(slot, entry);
+}
+
+function markDone(slot){
+  const today = new Date();
+  const entry = getOrCreateTodayEntry(today, slot);
+  entry.completed = true;
+  entry.skipped = false;
+  saveTodayEntry(slot, entry);
+}
+
+function skipToday(slot){
+  const today = new Date();
+  const entry = getOrCreateTodayEntry(today, slot);
+  entry.completed = false;
+  entry.skipped = true;
+  saveTodayEntry(slot, entry);
+}
+
+function undoState(slot){
+  const today = new Date();
+  const entry = getOrCreateTodayEntry(today, slot);
+  entry.completed = false;
+  entry.skipped = false;
+  saveTodayEntry(slot, entry);
+}
+
+/* ============================================================
+   LEDGER (outside activity)
+   ============================================================ */
+let ledgerSelectedType = null;
+function openLedgerModal(){
+  ledgerSelectedType = null;
+  const grid = document.getElementById('ledgerTypeGrid');
+  grid.innerHTML = LEDGER_TYPES.map(t=>`<div class="type-chip" onclick="selectLedgerType(this,'${t}')">${t}</div>`).join('');
+  document.getElementById('ledgerNotes').value = '';
+  document.getElementById('ledgerModal').classList.remove('hidden');
+}
+function closeLedgerModal(){
+  document.getElementById('ledgerModal').classList.add('hidden');
+}
+function selectLedgerType(el, type){
+  document.querySelectorAll('.type-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  ledgerSelectedType = type;
+}
+function saveLedgerEntry(){
+  if(!ledgerSelectedType){ alert('Pick what you did.'); return; }
+  const iso = toISO(new Date());
+  const notes = document.getElementById('ledgerNotes').value;
+  const ref = db.ref('move/ledger/'+iso).push();
+  ref.set({type: ledgerSelectedType, notes: notes, loggedAt: Date.now()});
+  closeLedgerModal();
+}
+function renderTodayLedger(){
+  const iso = toISO(new Date());
+  const entries = state.ledger[iso] || {};
+  const list = document.getElementById('ledgerTodayList');
+  const keys = Object.keys(entries);
+  if(keys.length===0){ list.innerHTML=''; return; }
+  list.innerHTML = '<div style="margin-top:8px;">' + keys.map(k=>{
+    const e = entries[k];
+    return `<div class="ledger-item"><span>${e.type}${e.notes?' — '+e.notes:''}</span><span class="tag outside">logged</span></div>`;
+  }).join('') + '</div>';
+}
+
+/* ============================================================
+   WEEKLY REPORT
+   Shows the 7 days before the current week (last Mon-Sun).
+   ============================================================ */
+function renderReport(){
+  const thisWeekStart = weekStartOf(new Date());
+  const lastWeekStart = addDays(thisWeekStart, -7);
+  const lastWeekEnd = addDays(thisWeekStart, -1);
+
+  document.getElementById('reportRange').textContent =
+    lastWeekStart.toLocaleDateString('en-IE',{day:'numeric',month:'short'}) + ' – ' +
+    lastWeekEnd.toLocaleDateString('en-IE',{day:'numeric',month:'short'});
+
+  let lines = [];
+  for(let i=0;i<7;i++){
+    const d = addDays(lastWeekStart, i);
+    const iso = toISO(d);
+    const label = d.toLocaleDateString('en-IE',{weekday:'short', day:'numeric'});
+    const log = state.dailyLog[iso] || {};
+    ['morning','evening'].forEach(slot=>{
+      const e = log[slot];
+      if(!e) return;
+      if(e.skipped){
+        lines.push({label, text:'Skipped', tagClass:'skipped', tag:'skip'});
+      } else if(e.completed){
+        lines.push({label, text: LADDER_LABEL[e.rung] + (e.gymName?': '+e.gymName:''), tagClass: e.rung==='gym'?'gym':'', tag: e.rung});
+      }
+    });
+    const ledgerDay = state.ledger[iso] || {};
+    Object.values(ledgerDay).forEach(e=>{
+      lines.push({label, text: e.type + (e.notes?' — '+e.notes:''), tagClass:'outside', tag:'logged'});
+    });
+  }
+
+  const body = document.getElementById('reportBody');
+  if(lines.length===0){
+    body.innerHTML = '<div class="empty">Nothing logged last week.</div>';
+    return;
+  }
+  body.innerHTML = lines.map(l=>`
+    <div class="report-line">
+      <span><strong style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-faint);margin-right:8px;">${l.label}</strong>${l.text}</span>
+      <span class="tag ${l.tagClass}">${l.tag}</span>
+    </div>`).join('');
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+initApp();
+</script>
+</body>
+</html>
