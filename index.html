@@ -286,6 +286,11 @@
   .line-label{
     font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-faint);margin-right:8px;
   }
+  .plan-row{gap:8px;}
+  .plan-row .plan-select{
+    width:auto;flex:1;min-width:0;
+    padding:8px 10px;font-size:13px;
+  }
   .tag{
     font-family:'IBM Plex Mono',monospace;font-size:11px;
     padding:3px 8px;border-radius:6px;background:var(--bg);color:var(--ink-soft);
@@ -482,7 +487,7 @@ const LADDER_SUB = {
 };
 
 // Invisible weekly baseline — never shown to the user
-const BASELINE = { strength: 2, cardio: 1, pilates: 1 };
+const BASELINE = { strength: 2, pilates: 1 };
 
 // Outside-activity ledger types
 const LEDGER_TYPES = ['Strength (Strong)','Pilates class','Golf','Squash','Football','Tennis','Walk','Hike','Other'];
@@ -617,18 +622,47 @@ function toggleSlot(day, slot){
   state.weekSchedule[day][slot] = !state.weekSchedule[day][slot];
   renderWeekGrid();
 }
+function planOptionValue(entry){
+  if(entry.rung === 'gym') return `gym::${entry.gymTime||''}::${entry.gymName||''}`;
+  return entry.rung;
+}
+
+function planOptionsFor(day, slot){
+  const gymOptions = classAvailable(day, slot).map(c=>({...c, type: c.type || classifyClassType(c.name)}));
+  const opts = gymOptions.map(c=>({
+    value: `gym::${c.time||''}::${c.name||''}`,
+    label: `Gym class: ${c.name}${c.time ? ' ('+formatTime12h(c.time)+')' : ''}`
+  }));
+  opts.push({ value:'strength', label:'Self strength' });
+  opts.push({ value:'cardio', label:'Cardio (self-directed)' });
+  opts.push({ value:'walk', label:'Long walk' });
+  opts.push({ value:'stretch', label:'Stretch' });
+  return opts;
+}
+
 function renderWeekPlanPreview(){
   const el = document.getElementById('weekPlanPreview');
   if(!el) return;
+  const weekStart = weekStartOf(new Date());
   const rows = [];
-  DAYS.forEach(day=>{
+  DAYS.forEach((day, idx)=>{
     const dayPlan = state.weekPlan[day];
     if(!dayPlan) return;
     ['morning','evening'].forEach(slot=>{
       const entry = dayPlan[slot];
       if(!entry) return;
-      const label = LADDER_LABEL[entry.rung] + (entry.gymName ? ': '+entry.gymName : '');
-      rows.push({ day: DAY_LABELS[day], slot: slot==='morning'?'AM':'PM', label, tag: entry.rung, tagClass: entry.rung==='gym'?'gym':'' });
+      const options = planOptionsFor(day, slot);
+      const currentValue = planOptionValue(entry);
+      // if the currently-assigned class no longer exists in the timetable, still show it as a selectable option
+      if(entry.rung==='gym' && !options.some(o=>o.value===currentValue)){
+        options.unshift({ value: currentValue, label: `Gym class: ${entry.gymName}` });
+      }
+      rows.push({
+        day, slot,
+        dayLabel: DAY_LABELS[day], slotLabel: slot==='morning'?'AM':'PM',
+        currentValue,
+        optionsHtml: options.map(o=>`<option value="${o.value}" ${o.value===currentValue?'selected':''}>${o.label}</option>`).join('')
+      });
     });
   });
   if(rows.length===0){
@@ -636,10 +670,37 @@ function renderWeekPlanPreview(){
     return;
   }
   el.innerHTML = rows.map(r=>`
-    <div class="report-line">
-      <span><strong class="line-label">${r.day} ${r.slot}</strong>${r.label}</span>
-      <span class="tag ${r.tagClass}">${r.tag}</span>
+    <div class="report-line plan-row">
+      <span class="line-label" style="flex:0 0 56px;">${r.dayLabel} ${r.slotLabel}</span>
+      <select class="plan-select" onchange="overridePlanSlot('${r.day}','${r.slot}',this.value)">
+        ${r.optionsHtml}
+      </select>
     </div>`).join('');
+}
+
+function overridePlanSlot(day, slot, value){
+  const weekStart = toISO(weekStartOf(new Date()));
+  let entry;
+  if(value.startsWith('gym::')){
+    const [, time, name] = value.split('::');
+    const match = classAvailable(day, slot).map(c=>({...c, type: c.type || classifyClassType(c.name)}))
+      .find(c => c.time === time && c.name === name) || {};
+    entry = { rung:'gym', gymName: name, gymType: match.type || classifyClassType(name),
+              gymTime: time, needsBooking: match.booking !== false };
+  } else {
+    entry = { rung: value, gymName: null, gymType: null, gymTime: null, needsBooking: null };
+  }
+  Promise.all([
+    db.ref('move/weekPlan/'+weekStart+'/'+day+'/'+slot).set(entry),
+    db.ref('move/weekBookings/'+weekStart+'/'+day+'/'+slot).set(null)
+  ]).then(()=>{
+    if(!state.weekPlan[day]) state.weekPlan[day] = {};
+    state.weekPlan[day][slot] = entry;
+    if(state.weekBookings[day]) state.weekBookings[day][slot] = false;
+    renderWeekPlanPreview();
+    renderBookingList();
+    renderToday();
+  });
 }
 
 function formatTime12h(t){
@@ -795,8 +856,8 @@ function isEligible(date, slot){
 }
 
 function weekCountsSoFar(weekStart){
-  // counts completed strength/cardio/pilates sessions from Monday up to today
-  const counts = {strength:0, cardio:0, pilates:0};
+  // counts completed strength/pilates sessions from Monday up to today
+  const counts = {strength:0, pilates:0};
   for(let i=0;i<7;i++){
     const d = addDays(weekStart, i);
     if(d > new Date()) break;
@@ -807,11 +868,9 @@ function weekCountsSoFar(weekStart){
         const entry = log[slot];
         if(entry && entry.completed && !entry.skipped){
           if(entry.rung==='strength') counts.strength++;
-          if(entry.rung==='cardio') counts.cardio++;
           if(entry.rung==='gym'){
             const t = entry.gymType || classifyClassType(entry.gymName);
             if(t==='strength') counts.strength++;
-            if(t==='cardio') counts.cardio++;
             if(t==='pilates') counts.pilates++;
           }
         }
@@ -832,39 +891,35 @@ function pruneLadder(date, slot){
   return LADDER.filter(rung => rung !== 'gym' || gymOptions.length > 0);
 }
 
-function pickRungForSlot(counts, pruned, gymOptionsRaw){
-  const gymOptions = gymOptionsRaw.map(c=>({...c, type: c.type || classifyClassType(c.name)}));
-  const pilatesClass = gymOptions.find(c=>c.type==='pilates');
-  const strengthClass = gymOptions.find(c=>c.type==='strength');
-  const cardioClass = gymOptions.find(c=>c.type==='cardio');
+/* The one class Move will ever auto-assign in a week: Monday's Pilates,
+   since that's fixed on the calendar regardless of anything else going on. */
+function findPilatesLockSlot(schedule){
+  const sched = (schedule || state.weekSchedule)['mon'];
+  if(!sched) return null;
+  for(const slot of ['morning','evening']){
+    if(!sched[slot]) continue;
+    const options = classAvailable('mon', slot).map(c=>({...c, type: c.type || classifyClassType(c.name)}));
+    const pilatesClass = options.find(c=>c.type==='pilates');
+    if(pilatesClass){
+      return { slot, gymName: pilatesClass.name, gymTime: pilatesClass.time, needsBooking: pilatesClass.booking !== false };
+    }
+  }
+  return null;
+}
 
-  let rung, gymClass = null;
-  if(counts.pilates < BASELINE.pilates && pilatesClass){
-    rung = 'gym'; gymClass = pilatesClass;
-  } else if(counts.strength < BASELINE.strength){
-    if(strengthClass){ rung = 'gym'; gymClass = strengthClass; }
-    else { rung = pruned.includes('strength') ? 'strength' : pruned[pruned.length-1]; }
-  } else if(counts.cardio < BASELINE.cardio){
-    if(cardioClass){ rung = 'gym'; gymClass = cardioClass; }
-    else { rung = pruned.includes('cardio') ? 'cardio' : 'walk'; }
+/* Everything outside the Monday pilates lock is self-directed: strength
+   until the weekly count is met, walking otherwise. Gym classes are never
+   auto-picked here — you can still reach one manually via "more" if you want. */
+function pickRungForSlot(counts, pruned){
+  let rung;
+  if(counts.strength < BASELINE.strength){
+    rung = pruned.includes('strength') ? 'strength' : pruned[pruned.length-1];
   } else {
     rung = 'walk';
   }
-  if(!pruned.includes(rung)) rung = pruned[Math.min(pruned.indexOf('walk')>=0?pruned.indexOf('walk'):pruned.length-1, pruned.length-1)];
-  if(rung !== 'gym') gymClass = null;
-
-  let contributes = null;
-  if(rung === 'gym' && gymClass){
-    if(['strength','cardio','pilates'].includes(gymClass.type)) contributes = gymClass.type;
-  } else if(rung === 'strength'){
-    contributes = 'strength';
-  } else if(rung === 'cardio'){
-    contributes = 'cardio';
-  }
-
-  return { rung, gymName: gymClass ? gymClass.name : null, gymType: gymClass ? gymClass.type : null,
-            gymTime: gymClass ? gymClass.time : null, needsBooking: gymClass ? (gymClass.booking !== false) : null,
-            contributes };
+  if(!pruned.includes(rung)) rung = pruned[pruned.length-1];
+  const contributes = rung === 'strength' ? 'strength' : null;
+  return { rung, gymName: null, gymType: null, gymTime: null, needsBooking: null, contributes };
 }
 
 function decideSuggestion(date, slot){
@@ -872,8 +927,14 @@ function decideSuggestion(date, slot){
   const weekStart = weekStartOf(date);
   const counts = weekCountsSoFar(weekStart);
   const pruned = pruneLadder(date, slot);
-  const gymOptions = classAvailable(day, slot);
-  const picked = pickRungForSlot(counts, pruned, gymOptions);
+
+  const lock = findPilatesLockSlot();
+  if(lock && day === 'mon' && lock.slot === slot && counts.pilates < BASELINE.pilates){
+    return { rung: 'gym', prunedLadder: pruned, gymName: lock.gymName, gymType: 'pilates',
+             gymTime: lock.gymTime, needsBooking: lock.needsBooking };
+  }
+
+  const picked = pickRungForSlot(counts, pruned);
   return { rung: picked.rung, prunedLadder: pruned, gymName: picked.gymName, gymType: picked.gymType,
            gymTime: picked.gymTime, needsBooking: picked.needsBooking };
 }
@@ -883,16 +944,25 @@ function decideSuggestion(date, slot){
    assuming the plan gets followed, rather than recomputing live day to day. */
 function generateWeekPlan(weekStart, schedule){
   const plan = {};
-  const counts = { strength: 0, cardio: 0, pilates: 0 };
+  const counts = { strength: 0, pilates: 0 };
+  const lock = findPilatesLockSlot(schedule);
+
   DAYS.forEach((day, idx)=>{
     const date = addDays(weekStart, idx);
     const daySched = schedule[day] || { morning: false, evening: false };
     plan[day] = {};
     ['morning','evening'].forEach(slot=>{
       if(!daySched[slot]){ plan[day][slot] = null; return; }
+
+      if(day === 'mon' && lock && lock.slot === slot){
+        plan[day][slot] = { rung: 'gym', gymName: lock.gymName, gymType: 'pilates', gymTime: lock.gymTime,
+                             needsBooking: lock.needsBooking, prunedLadder: pruneLadder(date, slot) };
+        counts.pilates++;
+        return;
+      }
+
       const pruned = pruneLadder(date, slot);
-      const gymOptions = classAvailable(day, slot);
-      const picked = pickRungForSlot(counts, pruned, gymOptions);
+      const picked = pickRungForSlot(counts, pruned);
       plan[day][slot] = { rung: picked.rung, gymName: picked.gymName, gymType: picked.gymType,
                            gymTime: picked.gymTime, needsBooking: picked.needsBooking, prunedLadder: pruned };
       if(picked.contributes) counts[picked.contributes]++;
