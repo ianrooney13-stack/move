@@ -490,7 +490,11 @@ const LADDER_SUB = {
 const BASELINE = { strength: 2, pilates: 1 };
 
 // Outside-activity ledger types
-const LEDGER_TYPES = ['Strength (Strong)','Pilates class','Golf','Squash','Football','Tennis','Walk','Hike','Other'];
+const LEDGER_TYPES = ['Strength (Strong)','Pilates class','Golf','Squash','Five-a-side','Tennis','Walk','Hike','Other'];
+// Joy-side activities Move can be told about in advance, so it doesn't suggest
+// something for a slot that's already spoken for. Move never plans these —
+// it just steps aside and logs them once they happen.
+const EXTERNAL_ACTIVITIES = ['Golf','Squash','Five-a-side','Hiking'];
 
 /* ============================================================
    STATE
@@ -624,6 +628,7 @@ function toggleSlot(day, slot){
 }
 function planOptionValue(entry){
   if(entry.rung === 'gym') return `gym::${entry.gymTime||''}::${entry.gymName||''}`;
+  if(entry.rung === 'external') return `external::${entry.activity||''}`;
   return entry.rung;
 }
 
@@ -633,10 +638,17 @@ function planOptionsFor(day, slot){
     value: `gym::${c.time||''}::${c.name||''}`,
     label: `Gym class: ${c.name}${c.time ? ' ('+formatTime12h(c.time)+')' : ''}`
   }));
+  // manual Pilates — for a day without a scheduled class but you want to book one anyway
+  if(!gymOptions.some(c=>c.type==='pilates')){
+    opts.push({ value:'gym::::Pilates class', label:'Pilates class' });
+  }
   opts.push({ value:'strength', label:'Self strength' });
   opts.push({ value:'cardio', label:'Cardio (self-directed)' });
   opts.push({ value:'walk', label:'Long walk' });
   opts.push({ value:'stretch', label:'Stretch' });
+  EXTERNAL_ACTIVITIES.forEach(a=>{
+    opts.push({ value:'external::'+a, label:a+' (already planned)' });
+  });
   return opts;
 }
 
@@ -687,6 +699,9 @@ function overridePlanSlot(day, slot, value){
       .find(c => c.time === time && c.name === name) || {};
     entry = { rung:'gym', gymName: name, gymType: match.type || classifyClassType(name),
               gymTime: time, needsBooking: match.booking !== false };
+  } else if(value.startsWith('external::')){
+    const activity = value.split('::')[1];
+    entry = { rung:'external', activity, gymName: null, gymType: null, gymTime: null, needsBooking: null };
   } else {
     entry = { rung: value, gymName: null, gymType: null, gymTime: null, needsBooking: null };
   }
@@ -723,7 +738,8 @@ function renderBookingList(){
       if(!entry || entry.rung !== 'gym') return;
       if(entry.needsBooking === false) return;
       const booked = !!(state.weekBookings[day] && state.weekBookings[day][slot]);
-      rows.push({ day, slot, label: `${DAY_LABELS[day]} ${formatTime12h(entry.gymTime)} — ${entry.gymName}`, booked });
+      const timePart = entry.gymTime ? formatTime12h(entry.gymTime) + ' — ' : '';
+      rows.push({ day, slot, label: `${DAY_LABELS[day]} ${timePart}${entry.gymName}`, booked });
     });
   });
   if(rows.length===0){
@@ -1000,6 +1016,30 @@ function renderToday(){
   }
 
   const entry = getOrCreateTodayEntry(today, slot);
+
+  if(entry.rung === 'external'){
+    let body;
+    if(entry.skipped){
+      body = `<div class="done-state is-skipped"><span class="check-badge is-skip">&ndash;</span>Didn't happen after all.</div>
+        <div class="skip-row"><button class="btn-text" onclick="undoState('${slot}')">Undo</button></div>`;
+    } else if(entry.completed){
+      body = `<div class="done-state"><span class="check-badge">&#10003;</span>Logged — ${entry.activity}.</div>
+        <div class="skip-row"><button class="btn-text" onclick="undoState('${slot}')">Undo</button></div>`;
+    } else {
+      body = `
+        <div class="eyebrow">${slot === 'morning' ? 'This morning' : 'This evening'}</div>
+        <div class="decision">${entry.activity}</div>
+        <div class="decision-sub">Already on the calendar — nothing for Move to decide here.</div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="markDone('${slot}')">Done</button>
+        </div>
+        <div class="skip-row"><button class="btn-text" onclick="skipToday('${slot}')">Didn't happen</button></div>
+      `;
+    }
+    container.innerHTML = `<div class="today-card" style="margin-left:0;">${body}</div>`;
+    return;
+  }
+
   const pruned = entry.prunedLadder || pruneLadder(today, slot);
   const idx = pruned.indexOf(entry.rung);
 
@@ -1061,9 +1101,14 @@ function adjust(slot, direction){
 function markDone(slot){
   const today = new Date();
   const entry = getOrCreateTodayEntry(today, slot);
+  const wasAlreadyCompleted = entry.completed;
   entry.completed = true;
   entry.skipped = false;
   saveTodayEntry(slot, entry);
+  if(entry.rung === 'external' && !wasAlreadyCompleted){
+    const iso = toISO(today);
+    db.ref('move/ledger/'+iso).push().set({ type: entry.activity, notes: '', loggedAt: Date.now() });
+  }
 }
 
 function skipToday(slot){
