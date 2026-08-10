@@ -442,6 +442,23 @@
     </div>
   </div>
 
+  <!-- Skip modal -->
+  <div class="modal-overlay hidden" id="skipModal">
+    <div class="modal">
+      <h3>Skipping today</h3>
+      <p class="section-sub" style="margin-bottom:14px;">Totally fine, no explanation needed. If a reason comes to mind, it might be worth a note for later — entirely optional.</p>
+      <div class="type-grid" id="skipReasonGrid"></div>
+      <div class="field">
+        <label>Notes (optional)</label>
+        <input type="text" id="skipNotesInput" placeholder="e.g. shoulder's been sore since Tuesday">
+      </div>
+      <div class="btn-row">
+        <button class="btn-ghost" style="flex:1" onclick="closeSkipModal()">Cancel</button>
+        <button class="btn-primary" style="flex:1" onclick="confirmSkip()">Skip</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -1108,7 +1125,7 @@ function renderToday(){
 
   let body;
   if(entry.skipped){
-    body = `<div class="done-state is-skipped"><span class="check-badge is-skip">&ndash;</span>Skipped today.</div>
+    body = `<div class="done-state is-skipped"><span class="check-badge is-skip">&ndash;</span>Skipped${entry.skipReason ? ' — '+entry.skipReason : ''}.</div>
       <div class="skip-row"><button class="btn-text" onclick="undoState('${slot}')">Undo</button></div>`;
   } else if(entry.completed){
     body = `<div class="done-state"><span class="check-badge">&#10003;</span>Done — ${LADDER_LABEL[entry.rung]}${entry.gymName?': '+entry.gymName:''}.</div>
@@ -1123,7 +1140,7 @@ function renderToday(){
         ${idx>0 ? `<button class="btn-ghost" onclick="adjust('${slot}',-1)">I can do more</button>` : ''}
         ${idx<pruned.length-1 ? `<button class="btn-ghost" onclick="adjust('${slot}',1)">I need less</button>` : ''}
       </div>
-      <div class="skip-row"><button class="btn-text" onclick="skipToday('${slot}')">Skip today</button></div>
+      <div class="skip-row"><button class="btn-text" onclick="openSkipModal('${slot}')">Skip today</button></div>
     `;
   }
 
@@ -1172,6 +1189,8 @@ function skipToday(slot){
   const entry = getOrCreateTodayEntry(today, slot);
   entry.completed = false;
   entry.skipped = true;
+  entry.skipReason = null;
+  entry.skipNotes = '';
   saveTodayEntry(slot, entry);
 }
 
@@ -1180,7 +1199,51 @@ function undoState(slot){
   const entry = getOrCreateTodayEntry(today, slot);
   entry.completed = false;
   entry.skipped = false;
+  entry.skipReason = null;
+  entry.skipNotes = '';
   saveTodayEntry(slot, entry);
+}
+
+/* ============================================================
+   SKIP REASON (optional — never required to actually skip)
+   ============================================================ */
+const SKIP_REASONS = ['Tired','No time','Sore / unwell','Something came up','Just not feeling it','Other'];
+let skipSlotPending = null;
+let skipReasonSelected = null;
+
+function openSkipModal(slot){
+  skipSlotPending = slot;
+  skipReasonSelected = null;
+  const grid = document.getElementById('skipReasonGrid');
+  grid.innerHTML = SKIP_REASONS.map(r=>`<div class="type-chip" onclick="selectSkipReason(this,'${r}')">${r}</div>`).join('');
+  document.getElementById('skipNotesInput').value = '';
+  document.getElementById('skipModal').classList.remove('hidden');
+}
+function closeSkipModal(){
+  document.getElementById('skipModal').classList.add('hidden');
+  skipSlotPending = null;
+}
+function selectSkipReason(el, reason){
+  const already = el.classList.contains('sel');
+  document.querySelectorAll('#skipReasonGrid .type-chip').forEach(c=>c.classList.remove('sel'));
+  if(!already){
+    el.classList.add('sel');
+    skipReasonSelected = reason;
+  } else {
+    skipReasonSelected = null;
+  }
+}
+function confirmSkip(){
+  const slot = skipSlotPending;
+  if(!slot) return;
+  const today = new Date();
+  const entry = getOrCreateTodayEntry(today, slot);
+  entry.completed = false;
+  entry.skipped = true;
+  entry.skipReason = skipReasonSelected || null;
+  entry.skipNotes = document.getElementById('skipNotesInput').value || '';
+  saveTodayEntry(slot, entry);
+  closeSkipModal();
 }
 
 /* ============================================================
@@ -1268,7 +1331,8 @@ function renderReport(){
       const e = log[slot];
       if(!e) return;
       if(e.skipped){
-        lines.push({label, text:'Skipped', tagClass:'skipped', tag:'skip'});
+        const skipDetail = (e.skipReason ? ' — '+e.skipReason : '') + (e.skipNotes ? ' — '+e.skipNotes : '');
+        lines.push({label, text:'Skipped'+skipDetail, tagClass:'skipped', tag:'skip'});
       } else if(e.completed){
         lines.push({label, text: LADDER_LABEL[e.rung] + (e.gymName?': '+e.gymName:''), tagClass: e.rung==='gym'?'gym':'', tag: e.rung});
       }
