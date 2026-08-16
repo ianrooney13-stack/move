@@ -445,7 +445,7 @@
   <!-- Ledger modal -->
   <div class="modal-overlay hidden" id="ledgerModal">
     <div class="modal">
-      <h3>What did you do?</h3>
+      <h3 id="ledgerModalTitle">What did you do?</h3>
       <div class="type-grid" id="ledgerTypeGrid"></div>
       <div class="field hidden" id="focusField">
         <label>What did it focus on? (optional)</label>
@@ -454,6 +454,9 @@
       <div class="field">
         <label>Notes (optional)</label>
         <input type="text" id="ledgerNotes" placeholder="e.g. 45 min, felt strong">
+      </div>
+      <div class="btn-row" id="ledgerDeleteRow" style="margin-bottom:8px;">
+        <button class="btn-text" style="color:var(--accent-warm);" onclick="deleteLedgerEntryFromModal()">Delete this entry</button>
       </div>
       <div class="btn-row">
         <button class="btn-ghost" style="flex:1" onclick="closeLedgerModal()">Cancel</button>
@@ -1379,21 +1382,45 @@ function moveToNextWeek(nextStartDate){
    ============================================================ */
 let ledgerSelectedType = null;
 let ledgerSelectedFocus = null;
+let ledgerEditKey = null;
 const FOCUS_TAGS = ['Full body','Upper','Lower','Push','Pull'];
 
-function openLedgerModal(){
+function openLedgerModal(key){
+  ledgerEditKey = key || null;
   ledgerSelectedType = null;
   ledgerSelectedFocus = null;
+  document.getElementById('ledgerModalTitle').textContent = ledgerEditKey ? 'Edit activity' : 'What did you do?';
   const grid = document.getElementById('ledgerTypeGrid');
   grid.innerHTML = LEDGER_TYPES.map(t=>`<div class="type-chip" onclick="selectLedgerType(this,'${t}')">${t}</div>`).join('');
   const focusGrid = document.getElementById('focusGrid');
   focusGrid.innerHTML = FOCUS_TAGS.map(f=>`<div class="type-chip" onclick="selectLedgerFocus(this,'${f}')">${f}</div>`).join('');
   document.getElementById('focusField').classList.add('hidden');
   document.getElementById('ledgerNotes').value = '';
+  document.getElementById('ledgerDeleteRow').classList.toggle('hidden', !ledgerEditKey);
+
+  if(ledgerEditKey){
+    const iso = toISO(new Date());
+    const entry = (state.ledger[iso] || {})[ledgerEditKey];
+    if(entry){
+      ledgerSelectedType = entry.type;
+      ledgerSelectedFocus = entry.focus || null;
+      document.getElementById('ledgerNotes').value = entry.notes || '';
+      const chip = Array.from(document.querySelectorAll('#ledgerTypeGrid .type-chip')).find(c=>c.textContent===entry.type);
+      if(chip){
+        chip.classList.add('sel');
+        document.getElementById('focusField').classList.toggle('hidden', entry.type !== 'Strength (Strong)');
+      }
+      if(entry.focus){
+        const fchip = Array.from(document.querySelectorAll('#focusGrid .type-chip')).find(c=>c.textContent===entry.focus);
+        if(fchip) fchip.classList.add('sel');
+      }
+    }
+  }
   document.getElementById('ledgerModal').classList.remove('hidden');
 }
 function closeLedgerModal(){
   document.getElementById('ledgerModal').classList.add('hidden');
+  ledgerEditKey = null;
 }
 function selectLedgerType(el, type){
   document.querySelectorAll('#ledgerTypeGrid .type-chip').forEach(c=>c.classList.remove('sel'));
@@ -1415,12 +1442,32 @@ function saveLedgerEntry(){
   if(!ledgerSelectedType){ alert('Pick what you did.'); return; }
   const iso = toISO(new Date());
   const notes = document.getElementById('ledgerNotes').value;
-  const ref = db.ref('move/ledger/'+iso).push();
-  const entry = {type: ledgerSelectedType, notes: notes, loggedAt: Date.now()};
-  if(ledgerSelectedType === 'Strength (Strong)' && ledgerSelectedFocus){
-    entry.focus = ledgerSelectedFocus;
+
+  if(ledgerEditKey){
+    const existing = (state.ledger[iso] || {})[ledgerEditKey] || {};
+    const updated = { type: ledgerSelectedType, notes: notes, loggedAt: existing.loggedAt || Date.now() };
+    if(ledgerSelectedType === 'Strength (Strong)' && ledgerSelectedFocus){
+      updated.focus = ledgerSelectedFocus;
+    }
+    db.ref('move/ledger/'+iso+'/'+ledgerEditKey).set(updated);
+  } else {
+    const ref = db.ref('move/ledger/'+iso).push();
+    const entry = {type: ledgerSelectedType, notes: notes, loggedAt: Date.now()};
+    if(ledgerSelectedType === 'Strength (Strong)' && ledgerSelectedFocus){
+      entry.focus = ledgerSelectedFocus;
+    }
+    ref.set(entry);
   }
-  ref.set(entry);
+  closeLedgerModal();
+}
+function deleteLedgerEntry(iso, key){
+  if(!confirm('Remove this logged activity?')) return;
+  db.ref('move/ledger/'+iso+'/'+key).remove();
+}
+function deleteLedgerEntryFromModal(){
+  if(!ledgerEditKey) return;
+  const iso = toISO(new Date());
+  deleteLedgerEntry(iso, ledgerEditKey);
   closeLedgerModal();
 }
 function renderTodayLedger(){
@@ -1432,7 +1479,13 @@ function renderTodayLedger(){
   list.innerHTML = '<div style="margin-top:8px;">' + keys.map(k=>{
     const e = entries[k];
     const label = e.type + (e.focus ? ' — '+e.focus : '') + (e.notes ? ' — '+e.notes : '');
-    return `<div class="ledger-item"><span>${label}</span><span class="tag outside">logged</span></div>`;
+    return `<div class="ledger-item">
+      <span onclick="openLedgerModal('${k}')" style="cursor:pointer;">${label}</span>
+      <span style="display:flex;align-items:center;gap:10px;">
+        <span class="tag outside">logged</span>
+        <span class="remove-x" onclick="deleteLedgerEntry('${iso}','${k}')">&times;</span>
+      </span>
+    </div>`;
   }).join('') + '</div>';
 }
 
