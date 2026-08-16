@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Move</title>
 <link rel="icon" type="image/png" sizes="16x16" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAgUlEQVR4nGNkgAL9vOj/DCSCi5OWMjKSqxkGmCjRzMDAwMBEiWaSDJjF+59hFi+mY4kyAFkjuiFEGaBbMx3OTvvMSJoBxzunwQ1B14zXgOOd0xiOd05jsCzPYmBgYIDTRBuADHBpJtoAfIAFXQDmZ3y2UtUFjAOflC9OWooZuSQAAPjvI9oTS/i8AAAAAElFTkSuQmCC">
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA5klEQVR4nN2XMQ6DMAxF7agrZ+nMWdgZGLpyhqwMDOycJTNn4QB0SmSiVEmEExf+hKHSe3xHrYoQyPvTHaH7HNmmFel8GkqCf4koCTjloQScRsU/UlhA8u0B/qGBRwoszQFLk7ZZdgEKTpFgFQgBYxLPOgP9jkn3aF4cYKNnd92Og6s9BgdgaIDC7dzvmARnEbiaewoYPbvq23E4PfPnWDD3x8jfeS7Qzz1XICpAK79aP0DiGTB6ZoGFEm3AHjr/8FUTKJ2ogK2+1Aqyvwe4I78C/79adQFJuBOQamGbVlR0qA0HAPgCVKNNd6FqoZ0AAAAASUVORK5CYII=">
@@ -10,32 +10,37 @@
 <link rel="icon" type="image/png" sizes="512x512" href="data:image/png;base64,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">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Move">
-<meta name="theme-color" content="#2F6E5B">
+<meta name="theme-color" content="#2166A5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #F1F3EE;
-    --surface: #FBFBF8;
-    --ink: #16221C;
-    --ink-soft: #55665C;
-    --ink-faint: #798A7E;
-    --primary: #2F6E5B;
-    --primary-dark: #234F41;
-    --on-primary: #F6F7F1;
-    --accent-warm: #C97B5A;
-    --line: #DCE0D5;
-    --rung-dim: #C7CDC0;
+    /* ---- Cool blue theme ---- */
+    --bg: #EDF2F8;             /* cool off-white ground */
+    --surface: #FBFCFE;        /* cards */
+    --ink: #10202F;            /* deep navy */
+    --ink-soft: #526475;
+    --ink-faint: #8394A4;
+    --primary: #2166A5;        /* ocean blue */
+    --primary-dark: #123A5E;
+    --on-primary: #F2F7FC;
+    --accent-warm: #17A2C4;    /* cool azure/cyan accent (was terracotta) */
+    --line: #D7E1EC;
+    --rung-dim: #C1CEDB;
     --radius: 18px;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    background:var(--bg);
+    background:
+      radial-gradient(130% 40% at 50% -8%, rgba(33,102,165,0.10) 0%, rgba(33,102,165,0) 60%),
+      var(--bg);
+    background-attachment: fixed;
     color:var(--ink);
     font-family:'Inter',system-ui,sans-serif;
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
+    -webkit-tap-highlight-color:transparent;
   }
   :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px;}
   @media (prefers-reduced-motion: reduce){
@@ -74,7 +79,8 @@
   }
   main{padding:0 18px;}
   section{display:none;}
-  section.active{display:block;}
+  section.active{display:block; animation: viewIn .28s ease;}
+  @keyframes viewIn{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:none;} }
 
   /* ---- Today card ---- */
   .today-wrap{
@@ -110,10 +116,10 @@
 
   .today-card{
     flex:1;
-    background:var(--surface);
+    background:linear-gradient(162deg, #FFFFFF 0%, #EDF4FC 100%);
     border-radius:var(--radius);
     padding:26px 22px;
-    box-shadow:0 1px 2px rgba(20,30,24,0.04);
+    box-shadow:0 14px 34px -20px rgba(18,58,94,0.45);
     border:1px solid var(--line);
   }
   .eyebrow{
@@ -194,7 +200,7 @@
     transition:background .15s ease;
   }
   nav.tabbar button.active{color:var(--primary);}
-  nav.tabbar button.active .icon-wrap{background:rgba(47,110,91,0.12);}
+  nav.tabbar button.active .icon-wrap{background:rgba(33,102,165,0.13);}
 
   /* ---- Generic ---- */
   h2.section-title{
@@ -288,9 +294,9 @@
     font-family:'IBM Plex Mono',monospace;font-size:11px;
     padding:3px 8px;border-radius:6px;background:var(--bg);color:var(--ink-soft);
   }
-  .tag.skipped{background:#E7E9E2;color:var(--ink-faint);}
-  .tag.gym{background:#F4E3D7;color:#B15E39;}
-  .tag.outside{background:#E4EAE1;color:var(--primary-dark);}
+  .tag.skipped{background:#E3E9F0;color:var(--ink-faint);}
+  .tag.gym{background:#D6EDF5;color:#0E6E86;}
+  .tag.outside{background:#DEEAF5;color:var(--primary-dark);}
 
   .empty{
     text-align:center;color:var(--ink-faint);font-size:14px;padding:30px 0;
@@ -534,7 +540,7 @@ const LEDGER_TYPES = ['Strength (Strong)','Pilates class','Golf','Squash','Five-
 // Joy-side activities Move can be told about in advance, so it doesn't suggest
 // something for a slot that's already spoken for. Move never plans these —
 // it just steps aside and logs them once they happen.
-const EXTERNAL_ACTIVITIES = ['Golf','Squash','Five-a-side','Hiking'];
+const EXTERNAL_ACTIVITIES = ['Golf','Squash','Five-a-side','Hike'];  // matches LEDGER_TYPES label
 
 // Reasons offered when a day comes in lighter than planned or as a rest.
 // Never required — always optional, for the report's benefit later.
@@ -591,8 +597,7 @@ function formatRangeLabel(startDate){
    FIREBASE LOAD
    ============================================================ */
 function initApp(){
-  document.getElementById('headerDate').textContent =
-    new Date().toLocaleDateString('en-IE',{weekday:'long', day:'numeric', month:'long'});
+  refreshToday();
 
   // The active week is explicit, persisted state — not derived from real
   // today's date — so it only moves forward when "Move to next week" is used.
@@ -626,6 +631,25 @@ function initApp(){
     renderReport();
   });
 }
+
+/* Keep "today" honest on a long-open PWA: refresh the header date and,
+   if the calendar day has actually rolled over, re-render the day-sensitive
+   views (today highlight, Done/More/Less on the right day). */
+let lastRenderedDay = null;
+function refreshToday(){
+  const now = new Date();
+  const headerEl = document.getElementById('headerDate');
+  if(headerEl) headerEl.textContent = now.toLocaleDateString('en-IE',{weekday:'long', day:'numeric', month:'long'});
+  const dayIso = toISO(now);
+  if(lastRenderedDay !== null && lastRenderedDay !== dayIso){
+    renderPlanTab();
+    renderReport();
+  }
+  lastRenderedDay = dayIso;
+}
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refreshToday(); });
+window.addEventListener('focus', refreshToday);
+setInterval(refreshToday, 60*1000);
 
 function attachWeekListeners(){
   if(weekRefs.schedule) weekRefs.schedule.off();
