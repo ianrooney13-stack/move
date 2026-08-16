@@ -75,13 +75,6 @@
   main{padding:0 18px;}
   section{display:none;}
   section.active{display:block;}
-  #tab-today.active{
-    min-height:calc(100vh - 180px);
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    padding-bottom:60px;
-  }
 
   /* ---- Today card ---- */
   .today-wrap{
@@ -334,6 +327,28 @@
     background:var(--bg);text-align:center;font-size:13px;font-weight:600;cursor:pointer;
   }
   .type-chip.sel{background:var(--primary);color:var(--on-primary);border-color:var(--primary);}
+
+  /* ---- Week plan/log view ---- */
+  .week-head{margin-bottom:2px;}
+  .plan-day{padding:14px 16px;}
+  .plan-day-today{border-color:var(--primary);}
+  .plan-day-label{
+    font-family:'Fraunces',serif;font-weight:500;font-size:16px;
+    margin-bottom:8px;display:flex;align-items:center;
+  }
+  .plan-slot{padding:12px 0 10px 0;border-top:1px solid var(--line);}
+  .plan-slot:first-of-type{border-top:none;padding-top:0;}
+  .plan-slot-top{
+    display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px;
+  }
+  .plan-slot-planned{font-size:14px;font-weight:600;text-align:right;}
+  .tag.today-tag{background:var(--primary);color:var(--on-primary);margin-left:8px;}
+  .btn-row.small{gap:8px;}
+  .btn-row.small button{padding:9px 12px;font-size:12.5px;}
+  .report-summary-line{font-size:14px;font-weight:600;margin-bottom:10px;}
+  .report-summary-why{font-size:13px;color:var(--ink-soft);}
+  .report-summary-why div{padding:6px 0;border-top:1px solid var(--line);}
+  .report-summary-why div:first-child{border-top:none;}
   .hidden{display:none !important;}
 </style>
 </head>
@@ -347,20 +362,24 @@
 
   <main>
 
-    <!-- TODAY -->
-    <section id="tab-today" class="active">
-      <div id="todayContent"></div>
-
-      <div style="margin-top:26px;">
-        <button class="btn-text" onclick="openLedgerModal()">+ Log something I did</button>
+    <!-- WEEK PLAN + LOG -->
+    <section id="tab-plan" class="active">
+      <div class="week-head">
+        <h2 class="section-title" style="margin-top:0;">This week</h2>
+        <p class="section-sub" id="planWeekRange"></p>
       </div>
 
+      <div id="planContent"></div>
+
+      <div style="margin-top:22px;">
+        <button class="btn-text" onclick="openLedgerModal()">+ Log something I did</button>
+      </div>
       <div id="ledgerTodayList"></div>
     </section>
 
-    <!-- WEEK SETUP -->
-    <section id="tab-week">
-      <h2 class="section-title">This week</h2>
+    <!-- SETUP -->
+    <section id="tab-setup">
+      <h2 class="section-title">Setup</h2>
       <p class="section-sub">Mark when you're off with Jack — mornings and evenings. Move only suggests something on off slots.</p>
       <div class="card">
         <div class="cal-grid" id="weekGrid"></div>
@@ -375,7 +394,7 @@
 
       <div id="weekPlanSection">
         <h3 class="subsection-title">This week's plan</h3>
-        <p class="section-sub">Set once you save the week above. Each slot is fixed for the week — day-to-day you can still nudge it with more/less or skip.</p>
+        <p class="section-sub">Set once you save the week above. Each slot is fixed for the week — day-to-day you can still nudge it with more/less or rest from the This Week tab.</p>
         <div class="card" id="weekPlanPreview"></div>
       </div>
 
@@ -400,21 +419,22 @@
 
     <!-- REPORT -->
     <section id="tab-report">
-      <h2 class="section-title">Last week</h2>
+      <h2 class="section-title">This week's report</h2>
       <p class="section-sub" id="reportRange"></p>
+      <div class="card" id="reportSummary"></div>
       <div class="card" id="reportBody"></div>
     </section>
 
   </main>
 
   <nav class="tabbar">
-    <button id="navToday" class="active" onclick="switchTab('today')">
-      <span class="icon-wrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
-      TODAY
-    </button>
-    <button id="navWeek" onclick="switchTab('week')">
+    <button id="navPlan" class="active" onclick="switchTab('plan')">
       <span class="icon-wrap"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="3"/><path d="M3.5 9.5h17M8 3v3M16 3v3"/></svg></span>
-      WEEK
+      THIS WEEK
+    </button>
+    <button id="navSetup" onclick="switchTab('setup')">
+      <span class="icon-wrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+      SETUP
     </button>
     <button id="navReport" onclick="switchTab('report')">
       <span class="icon-wrap"><svg viewBox="0 0 24 24"><path d="M5 19V10M12 19V5M19 19v-7"/></svg></span>
@@ -442,19 +462,19 @@
     </div>
   </div>
 
-  <!-- Skip modal -->
-  <div class="modal-overlay hidden" id="skipModal">
+  <!-- Reason modal (used for "less than planned" and "rest instead") -->
+  <div class="modal-overlay hidden" id="reasonModal">
     <div class="modal">
-      <h3>Skipping today</h3>
-      <p class="section-sub" style="margin-bottom:14px;">Totally fine, no explanation needed. If a reason comes to mind, it might be worth a note for later — entirely optional.</p>
-      <div class="type-grid" id="skipReasonGrid"></div>
+      <h3 id="reasonSubtitle">What changed?</h3>
+      <p class="section-sub" style="margin-bottom:14px;">Totally fine, no explanation needed. If a reason comes to mind, it might be worth a note for the report — entirely optional.</p>
+      <div class="type-grid" id="reasonGrid"></div>
       <div class="field">
         <label>Notes (optional)</label>
-        <input type="text" id="skipNotesInput" placeholder="e.g. shoulder's been sore since Tuesday">
+        <input type="text" id="reasonNotesInput" placeholder="e.g. shoulder's been sore since Tuesday">
       </div>
       <div class="btn-row">
-        <button class="btn-ghost" style="flex:1" onclick="closeSkipModal()">Cancel</button>
-        <button class="btn-primary" style="flex:1" onclick="confirmSkip()">Skip</button>
+        <button class="btn-ghost" style="flex:1" onclick="closeReasonModal()">Cancel</button>
+        <button class="btn-primary" style="flex:1" onclick="confirmReason()">Save</button>
       </div>
     </div>
   </div>
@@ -513,17 +533,25 @@ const LEDGER_TYPES = ['Strength (Strong)','Pilates class','Golf','Squash','Five-
 // it just steps aside and logs them once they happen.
 const EXTERNAL_ACTIVITIES = ['Golf','Squash','Five-a-side','Hiking'];
 
+// Reasons offered when a day comes in lighter than planned or as a rest.
+// Never required — always optional, for the report's benefit later.
+const REASON_OPTIONS = ['Tired','No time','Sore / unwell','Something came up','Just not feeling it','Other'];
+
 /* ============================================================
    STATE
    ============================================================ */
 let state = {
-  weekSchedule: {},   // { "mon": {morning:true, evening:false}, ... } for the CURRENT week doc
+  currentWeekStart: null, // ISO date of the Monday that's "active" — the single source of truth for "this week"
+  weekSchedule: {},   // { "mon": {morning:true, evening:false}, ... } for the ACTIVE week doc
   weekPlan: {},        // { "mon": {morning:{rung,gymName,gymType}, evening:{...}}, ... } committed at Sunday save
   weekBookings: {},     // { "mon": {morning:true}, ... } — whether a planned class has been booked
   timetable: {},       // { mon: [{time:"06:30", name:"HIIT"}], ... }
   dailyLog: {},         // { "2026-08-09": { morning:{...}, evening:{...} } }
   ledger: {}            // { "2026-08-09": { entryId: {type, notes, loggedAt} } }
 };
+// Live Firebase listener refs for the active week's paths, so they can be
+// detached and re-attached when "Move to next week" changes what's active.
+let weekRefs = { schedule: null, plan: null, bookings: null };
 
 /* ============================================================
    DATE HELPERS
@@ -531,6 +559,10 @@ let state = {
    ============================================================ */
 function pad(n){return n<10?'0'+n:''+n;}
 function toISO(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function parseISO(s){
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
 function dayKey(d){ // mon/tue/...
   const idx = (d.getDay()+6)%7; // convert Sun=0 -> 6, Mon=1->0
   return DAYS[idx];
@@ -543,9 +575,13 @@ function weekStartOf(d){
   return copy;
 }
 function addDays(d,n){const c=new Date(d);c.setDate(c.getDate()+n);return c;}
-function currentSlotNow(){
-  // crude: before 14:00 = morning, else evening
-  return new Date().getHours() < 14 ? 'morning' : 'evening';
+function currentWeekStartDate(){
+  return state.currentWeekStart ? parseISO(state.currentWeekStart) : weekStartOf(new Date());
+}
+function formatRangeLabel(startDate){
+  const end = addDays(startDate,6);
+  return startDate.toLocaleDateString('en-IE',{day:'numeric',month:'short'}) + ' – ' +
+         end.toLocaleDateString('en-IE',{day:'numeric',month:'short'});
 }
 
 /* ============================================================
@@ -555,35 +591,29 @@ function initApp(){
   document.getElementById('headerDate').textContent =
     new Date().toLocaleDateString('en-IE',{weekday:'long', day:'numeric', month:'long'});
 
-  const todayWeekStart = toISO(weekStartOf(new Date()));
-
-  db.ref('move/weekSchedule/'+todayWeekStart).on('value', snap=>{
-    state.weekSchedule = snap.val() || {};
-    renderWeekGrid();
-    renderToday();
-  });
-
-  db.ref('move/weekPlan/'+todayWeekStart).on('value', snap=>{
-    state.weekPlan = snap.val() || {};
-    renderToday();
-    renderWeekPlanPreview();
-    renderBookingList();
-  });
-
-  db.ref('move/weekBookings/'+todayWeekStart).on('value', snap=>{
-    state.weekBookings = snap.val() || {};
-    renderBookingList();
+  // The active week is explicit, persisted state — not derived from real
+  // today's date — so it only moves forward when "Move to next week" is used.
+  db.ref('move/currentWeekStart').on('value', snap=>{
+    const val = snap.val();
+    if(!val){
+      db.ref('move/currentWeekStart').set(toISO(weekStartOf(new Date())));
+      return;
+    }
+    if(val !== state.currentWeekStart){
+      state.currentWeekStart = val;
+      attachWeekListeners();
+    }
   });
 
   db.ref('move/timetable').on('value', snap=>{
     state.timetable = snap.val() || {};
     renderTimetable();
-    renderToday();
+    renderPlanTab();
   });
 
   db.ref('move/dailyLog').on('value', snap=>{
     state.dailyLog = snap.val() || {};
-    renderToday();
+    renderPlanTab();
     renderReport();
   });
 
@@ -594,15 +624,48 @@ function initApp(){
   });
 }
 
+function attachWeekListeners(){
+  if(weekRefs.schedule) weekRefs.schedule.off();
+  if(weekRefs.plan) weekRefs.plan.off();
+  if(weekRefs.bookings) weekRefs.bookings.off();
+
+  const ws = state.currentWeekStart;
+
+  weekRefs.schedule = db.ref('move/weekSchedule/'+ws);
+  weekRefs.schedule.on('value', snap=>{
+    state.weekSchedule = snap.val() || {};
+    renderWeekGrid();
+    renderPlanTab();
+  });
+
+  weekRefs.plan = db.ref('move/weekPlan/'+ws);
+  weekRefs.plan.on('value', snap=>{
+    state.weekPlan = snap.val() || {};
+    renderPlanTab();
+    renderWeekPlanPreview();
+    renderBookingList();
+  });
+
+  weekRefs.bookings = db.ref('move/weekBookings/'+ws);
+  weekRefs.bookings.on('value', snap=>{
+    state.weekBookings = snap.val() || {};
+    renderBookingList();
+  });
+
+  renderWeekHeader();
+  renderReport();
+}
+
 /* ============================================================
    TAB NAV
    ============================================================ */
 function switchTab(name){
-  ['today','week','report'].forEach(t=>{
+  ['plan','setup','report'].forEach(t=>{
     document.getElementById('tab-'+t).classList.toggle('active', t===name);
     document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===name);
   });
   if(name==='report') renderReport();
+  if(name==='plan') renderPlanTab();
 }
 
 /* ============================================================
@@ -672,7 +735,6 @@ function planOptionsFor(day, slot){
 function renderWeekPlanPreview(){
   const el = document.getElementById('weekPlanPreview');
   if(!el) return;
-  const weekStart = weekStartOf(new Date());
   const rows = [];
   DAYS.forEach((day, idx)=>{
     const dayPlan = state.weekPlan[day];
@@ -708,7 +770,7 @@ function renderWeekPlanPreview(){
 }
 
 function overridePlanSlot(day, slot, value){
-  const weekStart = toISO(weekStartOf(new Date()));
+  const weekStart = state.currentWeekStart;
   let entry;
   if(value.startsWith('gym::')){
     const [, time, name] = value.split('::');
@@ -731,7 +793,7 @@ function overridePlanSlot(day, slot, value){
     if(state.weekBookings[day]) state.weekBookings[day][slot] = false;
     renderWeekPlanPreview();
     renderBookingList();
-    renderToday();
+    renderPlanTab();
   });
 }
 
@@ -771,13 +833,13 @@ function renderBookingList(){
 }
 
 function toggleBooking(day, slot){
-  const weekStart = toISO(weekStartOf(new Date()));
+  const weekStart = state.currentWeekStart;
   const current = !!(state.weekBookings[day] && state.weekBookings[day][slot]);
   db.ref('move/weekBookings/'+weekStart+'/'+day+'/'+slot).set(!current);
 }
 function saveWeekSchedule(){
-  const weekStartDate = weekStartOf(new Date());
-  const weekStart = toISO(weekStartDate);
+  const weekStartDate = currentWeekStartDate();
+  const weekStart = state.currentWeekStart;
   const previousPlan = state.weekPlan || {};
   const plan = generateWeekPlanPreservingOverrides(weekStartDate, state.weekSchedule, previousPlan);
 
@@ -801,7 +863,7 @@ function saveWeekSchedule(){
   }).then(()=>{
     alert('Week planned.');
     state.weekPlan = plan;
-    renderToday();
+    renderPlanTab();
     renderWeekPlanPreview();
     renderBookingList();
   });
@@ -1060,190 +1122,256 @@ function generateWeekPlanPreservingOverrides(weekStart, schedule, existingPlan){
   return plan;
 }
 
-function getOrCreateTodayEntry(date, slot){
-  const iso = toISO(date);
-  const existing = state.dailyLog[iso] && state.dailyLog[iso][slot];
-  if(existing) return existing;
+/* Returns this week's plan for a day/slot — falling back to a live
+   suggestion only if the slot never got a committed plan entry (e.g. the
+   day was switched on after the week was already saved). */
+function getPlanForDaySlot(date, slot){
   const day = dayKey(date);
-  const planned = state.weekPlan[day] && state.weekPlan[day][slot];
-  const decision = planned || decideSuggestion(date, slot);
+  const existing = state.weekPlan[day] && state.weekPlan[day][slot];
+  if(existing) return existing;
+  const decision = decideSuggestion(date, slot);
   return {
     rung: decision.rung,
     gymName: decision.gymName,
     gymType: decision.gymType,
-    prunedLadder: decision.prunedLadder || pruneLadder(date, slot),
-    adjustment: null,
-    completed: false,
-    skipped: false
+    gymTime: decision.gymTime,
+    needsBooking: decision.needsBooking,
+    prunedLadder: decision.prunedLadder || pruneLadder(date, slot)
   };
 }
-
-function renderToday(){
-  const container = document.getElementById('todayContent');
-  const today = new Date();
-  const slot = currentSlotNow();
-
-  if(!isEligible(today, slot)){
-    container.innerHTML = `<div class="not-eligible">Not a Move slot today.<br><span style="font-size:14px;color:var(--ink-faint);font-family:'Inter',sans-serif;">You're on with Jack — nothing to decide.</span></div>`;
-    return;
-  }
-
-  const entry = getOrCreateTodayEntry(today, slot);
-
-  if(entry.rung === 'external'){
-    let body;
-    if(entry.skipped){
-      body = `<div class="done-state is-skipped"><span class="check-badge is-skip">&ndash;</span>Didn't happen after all.</div>
-        <div class="skip-row"><button class="btn-text" onclick="undoState('${slot}')">Undo</button></div>`;
-    } else if(entry.completed){
-      body = `<div class="done-state"><span class="check-badge">&#10003;</span>Logged — ${entry.activity}.</div>
-        <div class="skip-row"><button class="btn-text" onclick="undoState('${slot}')">Undo</button></div>`;
-    } else {
-      body = `
-        <div class="eyebrow">${slot === 'morning' ? 'This morning' : 'This evening'}</div>
-        <div class="decision">${entry.activity}</div>
-        <div class="decision-sub">Already on the calendar — nothing for Move to decide here.</div>
-        <div class="btn-row">
-          <button class="btn-primary" onclick="markDone('${slot}')">Done</button>
-        </div>
-        <div class="skip-row"><button class="btn-text" onclick="skipToday('${slot}')">Didn't happen</button></div>
-      `;
-    }
-    container.innerHTML = `<div class="today-card" style="margin-left:0;">${body}</div>`;
-    return;
-  }
-
-  const pruned = entry.prunedLadder || pruneLadder(today, slot);
-  const idx = pruned.indexOf(entry.rung);
-
-  let rail = '<div class="rail-line"></div>';
-  LADDER.forEach(r=>{
-    const isAvailableToday = pruned.includes(r);
-    const isActive = r === entry.rung;
-    rail += `<div class="rung-tick ${isActive?'active':''} ${r==='gym'?'gym':''}" style="opacity:${isAvailableToday?1:0.25}"></div>`;
-  });
-
-  let body;
-  if(entry.skipped){
-    body = `<div class="done-state is-skipped"><span class="check-badge is-skip">&ndash;</span>Skipped${entry.skipReason ? ' — '+entry.skipReason : ''}.</div>
-      <div class="skip-row"><button class="btn-text" onclick="undoState('${slot}')">Undo</button></div>`;
-  } else if(entry.completed){
-    body = `<div class="done-state"><span class="check-badge">&#10003;</span>Done — ${LADDER_LABEL[entry.rung]}${entry.gymName?': '+entry.gymName:''}.</div>
-      <div class="skip-row"><button class="btn-text" onclick="undoState('${slot}')">Undo</button></div>`;
-  } else {
-    body = `
-      <div class="eyebrow">${slot === 'morning' ? 'This morning' : 'This evening'}</div>
-      <div class="decision">${LADDER_LABEL[entry.rung]}${entry.gymName?' — '+entry.gymName:''}</div>
-      <div class="decision-sub">${LADDER_SUB[entry.rung]}</div>
-      <div class="btn-row">
-        <button class="btn-primary" onclick="markDone('${slot}')">Done</button>
-        ${idx>0 ? `<button class="btn-ghost" onclick="adjust('${slot}',-1)">I can do more</button>` : ''}
-        ${idx<pruned.length-1 ? `<button class="btn-ghost" onclick="adjust('${slot}',1)">I need less</button>` : ''}
-      </div>
-      <div class="skip-row"><button class="btn-text" onclick="openSkipModal('${slot}')">Skip today</button></div>
-    `;
-  }
-
-  container.innerHTML = `<div class="today-wrap"><div class="rung-rail">${rail}</div><div class="today-card">${body}</div></div>`;
+function getLogForDaySlot(iso, slot){
+  return (state.dailyLog[iso] && state.dailyLog[iso][slot]) || null;
 }
-
-function saveTodayEntry(slot, entry){
-  const iso = toISO(new Date());
+function saveLogEntry(iso, slot, entry){
   db.ref('move/dailyLog/'+iso+'/'+slot).set(entry);
 }
+function undoLog(iso, slot){
+  db.ref('move/dailyLog/'+iso+'/'+slot).remove();
+}
 
-function adjust(slot, direction){
-  const today = new Date();
-  const entry = getOrCreateTodayEntry(today, slot);
-  const pruned = entry.prunedLadder || pruneLadder(today, slot);
-  let idx = pruned.indexOf(entry.rung);
+/* Mark a day/slot done exactly as planned — no rationale needed. */
+function markPlanDone(iso, slot){
+  const date = parseISO(iso);
+  const plan = getPlanForDaySlot(date, slot);
+  if(plan.rung === 'external'){
+    const entry = { rung:'external', activity: plan.activity, planRung:'external', completed:true, skipped:false };
+    saveLogEntry(iso, slot, entry);
+    const alreadyLedgered = state.ledger[iso] && Object.values(state.ledger[iso]).some(e=>e.type===plan.activity);
+    if(!alreadyLedgered) db.ref('move/ledger/'+iso).push().set({ type: plan.activity, notes:'', loggedAt: Date.now() });
+    return;
+  }
+  saveLogEntry(iso, slot, {
+    rung: plan.rung, gymName: plan.gymName, gymType: plan.gymType,
+    planRung: plan.rung, completed:true, skipped:false
+  });
+}
+
+/* Steps one rung up or down the ladder from wherever the day currently
+   sits (the plan, or an already-logged adjustment). */
+function stepRung(iso, slot, direction){
+  const date = parseISO(iso);
+  const plan = getPlanForDaySlot(date, slot);
+  const pruned = plan.prunedLadder || pruneLadder(date, slot);
+  const currentLog = getLogForDaySlot(iso, slot);
+  const baseRung = (currentLog && currentLog.completed && !currentLog.skipped) ? currentLog.rung : plan.rung;
+  let idx = pruned.indexOf(baseRung);
+  if(idx === -1) idx = Math.max(0, pruned.indexOf(plan.rung));
   idx = Math.max(0, Math.min(pruned.length-1, idx+direction));
-  entry.rung = pruned[idx];
-  entry.adjustment = direction < 0 ? 'more' : 'less';
-  if(entry.rung==='gym'){
-    const opt = classAvailable(dayKey(today), slot)[0] || {};
-    entry.gymName = opt.name || null;
-    entry.gymType = opt.type || classifyClassType(opt.name);
-  } else {
-    entry.gymName = null;
-    entry.gymType = null;
+  const newRung = pruned[idx];
+  let gymName = null, gymType = null;
+  if(newRung === 'gym'){
+    const opt = classAvailable(dayKey(date), slot)[0] || {};
+    gymName = opt.name || null;
+    gymType = opt.type || classifyClassType(opt.name);
   }
-  saveTodayEntry(slot, entry);
+  return { rung: newRung, gymName, gymType };
 }
 
-function markDone(slot){
-  const today = new Date();
-  const entry = getOrCreateTodayEntry(today, slot);
-  const wasAlreadyCompleted = entry.completed;
-  entry.completed = true;
-  entry.skipped = false;
-  saveTodayEntry(slot, entry);
-  if(entry.rung === 'external' && !wasAlreadyCompleted){
-    const iso = toISO(today);
-    db.ref('move/ledger/'+iso).push().set({ type: entry.activity, notes: '', loggedAt: Date.now() });
-  }
+/* "More" is an upgrade from plan — no rationale needed, saved immediately. */
+function moreThanPlan(iso, slot){
+  const date = parseISO(iso);
+  const plan = getPlanForDaySlot(date, slot);
+  const step = stepRung(iso, slot, -1);
+  saveLogEntry(iso, slot, {
+    rung: step.rung, gymName: step.gymName, gymType: step.gymType,
+    planRung: plan.rung, completed:true, skipped:false
+  });
 }
 
-function skipToday(slot){
-  const today = new Date();
-  const entry = getOrCreateTodayEntry(today, slot);
-  entry.completed = false;
-  entry.skipped = true;
-  entry.skipReason = null;
-  entry.skipNotes = '';
-  saveTodayEntry(slot, entry);
+/* "Less" and "Rest" both open the reason modal — the rationale capture
+   Ian wants whenever a day comes in lighter than planned. */
+let pendingReason = null; // { iso, slot, mode: 'less'|'rest', step? }
+function lessThanPlan(iso, slot){
+  const step = stepRung(iso, slot, 1);
+  pendingReason = { iso, slot, mode:'less', step };
+  openReasonModal('Why less than planned?');
 }
-
-function undoState(slot){
-  const today = new Date();
-  const entry = getOrCreateTodayEntry(today, slot);
-  entry.completed = false;
-  entry.skipped = false;
-  entry.skipReason = null;
-  entry.skipNotes = '';
-  saveTodayEntry(slot, entry);
+function restInstead(iso, slot){
+  pendingReason = { iso, slot, mode:'rest' };
+  openReasonModal('Why rest instead?');
 }
 
 /* ============================================================
-   SKIP REASON (optional — never required to actually skip)
+   REASON MODAL (optional — never required to log a change)
    ============================================================ */
-const SKIP_REASONS = ['Tired','No time','Sore / unwell','Something came up','Just not feeling it','Other'];
-let skipSlotPending = null;
-let skipReasonSelected = null;
-
-function openSkipModal(slot){
-  skipSlotPending = slot;
-  skipReasonSelected = null;
-  const grid = document.getElementById('skipReasonGrid');
-  grid.innerHTML = SKIP_REASONS.map(r=>`<div class="type-chip" onclick="selectSkipReason(this,'${r}')">${r}</div>`).join('');
-  document.getElementById('skipNotesInput').value = '';
-  document.getElementById('skipModal').classList.remove('hidden');
+let reasonSelected = null;
+function openReasonModal(subtitle){
+  reasonSelected = null;
+  document.getElementById('reasonSubtitle').textContent = subtitle;
+  const grid = document.getElementById('reasonGrid');
+  grid.innerHTML = REASON_OPTIONS.map(r=>`<div class="type-chip" onclick="selectReason(this,'${r}')">${r}</div>`).join('');
+  document.getElementById('reasonNotesInput').value = '';
+  document.getElementById('reasonModal').classList.remove('hidden');
 }
-function closeSkipModal(){
-  document.getElementById('skipModal').classList.add('hidden');
-  skipSlotPending = null;
+function closeReasonModal(){
+  document.getElementById('reasonModal').classList.add('hidden');
+  pendingReason = null;
 }
-function selectSkipReason(el, reason){
+function selectReason(el, reason){
   const already = el.classList.contains('sel');
-  document.querySelectorAll('#skipReasonGrid .type-chip').forEach(c=>c.classList.remove('sel'));
+  document.querySelectorAll('#reasonGrid .type-chip').forEach(c=>c.classList.remove('sel'));
   if(!already){
     el.classList.add('sel');
-    skipReasonSelected = reason;
+    reasonSelected = reason;
   } else {
-    skipReasonSelected = null;
+    reasonSelected = null;
   }
 }
-function confirmSkip(){
-  const slot = skipSlotPending;
-  if(!slot) return;
-  const today = new Date();
-  const entry = getOrCreateTodayEntry(today, slot);
-  entry.completed = false;
-  entry.skipped = true;
-  entry.skipReason = skipReasonSelected || null;
-  entry.skipNotes = document.getElementById('skipNotesInput').value || '';
-  saveTodayEntry(slot, entry);
-  closeSkipModal();
+function confirmReason(){
+  if(!pendingReason) return;
+  const { iso, slot, mode, step } = pendingReason;
+  const plan = getPlanForDaySlot(parseISO(iso), slot);
+  const notes = document.getElementById('reasonNotesInput').value || '';
+  let entry;
+  if(mode === 'rest'){
+    entry = { rung: plan.rung, planRung: plan.rung, completed:false, skipped:true,
+              reason: reasonSelected || null, reasonNotes: notes };
+  } else {
+    entry = { rung: step.rung, gymName: step.gymName, gymType: step.gymType,
+              planRung: plan.rung, completed:true, skipped:false,
+              reason: reasonSelected || null, reasonNotes: notes };
+  }
+  saveLogEntry(iso, slot, entry);
+  closeReasonModal();
+}
+
+/* ============================================================
+   WEEK PLAN + LOG VIEW (replaces the old single "today" slot)
+   Shows the whole active week starting from the plan; each day is
+   updated in place as it happens, whenever it happens.
+   ============================================================ */
+function renderWeekHeader(){
+  const el = document.getElementById('planWeekRange');
+  if(!el) return;
+  el.textContent = formatRangeLabel(currentWeekStartDate());
+}
+
+function renderPlanTab(){
+  renderWeekHeader();
+  const container = document.getElementById('planContent');
+  if(!container) return;
+
+  const start = currentWeekStartDate();
+  const todayIso = toISO(new Date());
+  let html = '';
+  let anyEligible = false;
+
+  DAYS.forEach((day, idx)=>{
+    const date = addDays(start, idx);
+    const iso = toISO(date);
+    const sched = state.weekSchedule[day] || {morning:false, evening:false};
+    const slots = ['morning','evening'].filter(s=>sched[s]);
+    if(slots.length===0) return;
+    anyEligible = true;
+
+    const isToday = iso === todayIso;
+    const dayLabel = date.toLocaleDateString('en-IE',{weekday:'long', day:'numeric', month:'short'});
+
+    html += `<div class="card plan-day${isToday?' plan-day-today':''}">
+      <div class="plan-day-label">${dayLabel}${isToday?' <span class="tag today-tag">today</span>':''}</div>`;
+
+    slots.forEach(slot=>{
+      const plan = getPlanForDaySlot(date, slot);
+      const log = getLogForDaySlot(iso, slot);
+      const slotLabel = slot==='morning' ? 'AM' : 'PM';
+      const plannedLabel = plan.rung==='external'
+        ? plan.activity
+        : LADDER_LABEL[plan.rung] + (plan.gymName ? ': '+plan.gymName : '');
+
+      html += `<div class="plan-slot">
+        <div class="plan-slot-top">
+          <span class="line-label">${slotLabel}</span>
+          <span class="plan-slot-planned">${plannedLabel}</span>
+        </div>`;
+
+      if(!log){
+        let canMore = false, canLess = false;
+        if(plan.rung !== 'external'){
+          const pruned = plan.prunedLadder || pruneLadder(date, slot);
+          let idx2 = pruned.indexOf(plan.rung);
+          if(idx2 === -1) idx2 = 0;
+          canMore = idx2 > 0;
+          canLess = idx2 < pruned.length-1;
+        }
+        html += `<div class="btn-row small">
+          <button class="btn-primary" onclick="markPlanDone('${iso}','${slot}')">Done</button>
+          ${canLess?`<button class="btn-ghost" onclick="lessThanPlan('${iso}','${slot}')">Less</button>`:''}
+          ${canMore?`<button class="btn-ghost" onclick="moreThanPlan('${iso}','${slot}')">More</button>`:''}
+          <button class="btn-text" onclick="restInstead('${iso}','${slot}')">${plan.rung==='external'?"Didn't happen":'Rest'}</button>
+        </div>`;
+      } else if(log.skipped){
+        const reasonText = (log.reason?' — '+log.reason:'') + (log.reasonNotes?' — '+log.reasonNotes:'');
+        html += `<div class="done-state is-skipped"><span class="check-badge is-skip">&ndash;</span>Rest${reasonText}</div>
+          <div class="skip-row"><button class="btn-text" onclick="undoLog('${iso}','${slot}')">Undo</button></div>`;
+      } else if(log.completed){
+        const label = log.rung==='external' ? (log.activity||plannedLabel) : (LADDER_LABEL[log.rung] + (log.gymName?': '+log.gymName:''));
+        const changed = log.planRung && log.rung !== log.planRung;
+        const changeNote = changed ? ` (planned ${LADDER_LABEL[log.planRung] || plannedLabel})` : '';
+        const reasonText = (log.reason?' — '+log.reason:'') + (log.reasonNotes?' — '+log.reasonNotes:'');
+        html += `<div class="done-state"><span class="check-badge">&#10003;</span>${label}${changeNote}${reasonText}</div>
+          <div class="skip-row"><button class="btn-text" onclick="undoLog('${iso}','${slot}')">Undo</button></div>`;
+      }
+
+      html += `</div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  if(!anyEligible){
+    html = '<div class="empty">Nothing planned. Set this week up in Setup.</div>';
+  }
+
+  html += `<div class="save-bar"><button class="btn-ghost" style="width:100%" onclick="confirmMoveToNextWeek()">Move to next week &rarr;</button></div>`;
+
+  container.innerHTML = html;
+}
+
+/* ============================================================
+   MOVE TO NEXT WEEK
+   The explicit Sunday switchover — locks in the week that's ending and
+   starts the next one, carrying the on/off schedule forward as a default
+   and committing a fresh plan against it.
+   ============================================================ */
+function confirmMoveToNextWeek(){
+  const nextStartDate = addDays(currentWeekStartDate(), 7);
+  const label = formatRangeLabel(nextStartDate);
+  if(!confirm(`Move to next week (${label})? This locks in the week you're leaving and starts a fresh one.`)) return;
+  moveToNextWeek(nextStartDate);
+}
+
+function moveToNextWeek(nextStartDate){
+  const nextStart = toISO(nextStartDate);
+  const carriedSchedule = state.weekSchedule || {};
+  const newPlan = generateWeekPlan(nextStartDate, carriedSchedule);
+
+  Promise.all([
+    db.ref('move/weekSchedule/'+nextStart).set(carriedSchedule),
+    db.ref('move/weekPlan/'+nextStart).set(newPlan),
+    db.ref('move/weekBookings/'+nextStart).set(null)
+  ]).then(()=>{
+    return db.ref('move/currentWeekStart').set(nextStart);
+  });
 }
 
 /* ============================================================
@@ -1310,33 +1438,58 @@ function renderTodayLedger(){
 
 /* ============================================================
    WEEKLY REPORT
-   Shows the 7 days before the current week (last Mon-Sun).
+   Always reflects the active week (state.currentWeekStart), so it fills
+   in as the week happens and reads as a complete report by Sunday —
+   no separate step to "run" it. Compares plan vs actual per slot and
+   rolls up why anything changed, using the rationale captured on the
+   This Week tab.
    ============================================================ */
 function renderReport(){
-  const thisWeekStart = weekStartOf(new Date());
-  const lastWeekStart = addDays(thisWeekStart, -7);
-  const lastWeekEnd = addDays(thisWeekStart, -1);
-
-  document.getElementById('reportRange').textContent =
-    lastWeekStart.toLocaleDateString('en-IE',{day:'numeric',month:'short'}) + ' – ' +
-    lastWeekEnd.toLocaleDateString('en-IE',{day:'numeric',month:'short'});
+  const start = currentWeekStartDate();
+  const rangeEl = document.getElementById('reportRange');
+  if(rangeEl) rangeEl.textContent = formatRangeLabel(start);
 
   let lines = [];
+  let plannedCount = 0, doneAsPlanned = 0, notYet = 0;
+  const adjusted = [], rested = [];
+
   for(let i=0;i<7;i++){
-    const d = addDays(lastWeekStart, i);
+    const d = addDays(start, i);
     const iso = toISO(d);
+    const day = dayKey(d);
     const label = d.toLocaleDateString('en-IE',{weekday:'short', day:'numeric'});
-    const log = state.dailyLog[iso] || {};
+    const daySched = state.weekSchedule[day] || {morning:false, evening:false};
+
     ['morning','evening'].forEach(slot=>{
-      const e = log[slot];
-      if(!e) return;
-      if(e.skipped){
-        const skipDetail = (e.skipReason ? ' — '+e.skipReason : '') + (e.skipNotes ? ' — '+e.skipNotes : '');
-        lines.push({label, text:'Skipped'+skipDetail, tagClass:'skipped', tag:'skip'});
-      } else if(e.completed){
-        lines.push({label, text: LADDER_LABEL[e.rung] + (e.gymName?': '+e.gymName:''), tagClass: e.rung==='gym'?'gym':'', tag: e.rung});
+      if(!daySched[slot]) return;
+      const plan = state.weekPlan[day] && state.weekPlan[day][slot];
+      if(!plan) return;
+      plannedCount++;
+      const plannedLabel = plan.rung==='external' ? plan.activity : LADDER_LABEL[plan.rung] + (plan.gymName?': '+plan.gymName:'');
+      const log = state.dailyLog[iso] && state.dailyLog[iso][slot];
+
+      if(!log){
+        notYet++;
+        lines.push({label, text:'Planned: '+plannedLabel+' — not yet logged', tagClass:'', tag:'pending'});
+        return;
+      }
+      if(log.skipped){
+        const reasonBits = [log.reason, log.reasonNotes].filter(Boolean).join(' — ');
+        rested.push({label, plannedLabel, reason: reasonBits});
+        lines.push({label, text:'Rest instead of '+plannedLabel+(reasonBits?' — '+reasonBits:''), tagClass:'skipped', tag:'rest'});
+      } else if(log.completed){
+        const actualLabel = log.rung==='external' ? (log.activity||plannedLabel) : LADDER_LABEL[log.rung]+(log.gymName?': '+log.gymName:'');
+        if(log.planRung && log.rung !== log.planRung){
+          const reasonBits = [log.reason, log.reasonNotes].filter(Boolean).join(' — ');
+          adjusted.push({label, plannedLabel, actualLabel, reason: reasonBits});
+          lines.push({label, text: actualLabel+' instead of '+plannedLabel+(reasonBits?' — '+reasonBits:''), tagClass:'', tag:'changed'});
+        } else {
+          doneAsPlanned++;
+          lines.push({label, text: actualLabel, tagClass: log.rung==='gym'?'gym':'', tag: log.rung});
+        }
       }
     });
+
     const ledgerDay = state.ledger[iso] || {};
     Object.values(ledgerDay).forEach(e=>{
       const text = e.type + (e.focus ? ' — '+e.focus : '') + (e.notes ? ' — '+e.notes : '');
@@ -1344,9 +1497,31 @@ function renderReport(){
     });
   }
 
+  const summaryEl = document.getElementById('reportSummary');
+  if(summaryEl){
+    if(plannedCount===0){
+      summaryEl.innerHTML = '';
+    } else {
+      const bits = [`${doneAsPlanned} of ${plannedCount} done as planned`];
+      if(adjusted.length) bits.push(`${adjusted.length} changed`);
+      if(rested.length) bits.push(`${rested.length} rest instead`);
+      if(notYet) bits.push(`${notYet} not yet logged`);
+      let summaryHtml = `<div class="report-summary-line">${bits.join(', ')}.</div>`;
+
+      const changeLines = [...adjusted, ...rested];
+      if(changeLines.length){
+        summaryHtml += '<div class="report-summary-why">' + changeLines.map(c=>{
+          const what = c.actualLabel ? `${c.label}: ${c.plannedLabel} → ${c.actualLabel}` : `${c.label}: ${c.plannedLabel} → Rest`;
+          return `<div>${what}${c.reason?' — '+c.reason:''}</div>`;
+        }).join('') + '</div>';
+      }
+      summaryEl.innerHTML = summaryHtml;
+    }
+  }
+
   const body = document.getElementById('reportBody');
   if(lines.length===0){
-    body.innerHTML = '<div class="empty">Nothing logged last week.</div>';
+    body.innerHTML = '<div class="empty">Nothing planned yet this week.</div>';
     return;
   }
   body.innerHTML = lines.map(l=>`
